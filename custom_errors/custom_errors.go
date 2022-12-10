@@ -1,5 +1,7 @@
 package custom_errors
 
+import "strings"
+
 var (
 	// general errors
 	ErrUnknownErrorOccured = newErr(101, "Unknown error occured")
@@ -22,6 +24,14 @@ var (
 	ErrPasswordInvalid               = newErr(212, "Password is invalid")
 	ErrImageFormatInvalid            = newErr(213, "Image format must be in JPEG format")
 	ErrImageSizeTooLarge             = newErr(214, "Image size is too large")
+
+	// token errors
+	ErrMalformedRefreshToken = newErr(301, "Refresh token is malformed")
+	ErrInvalidRefreshToken   = newErr(302, "Invalid refresh token")
+	ErrRefreshTokenNotFound  = newErr(303, "Refresh token not found")
+	ErrMalformedAccessToken  = newErr(304, "Access token is malformed")
+	ErrInvalidAccessToken    = newErr(305, "Invalid access token")
+	ErrAccessTokenExpired    = newErr(306, "Access token expired")
 )
 
 type Error struct {
@@ -35,4 +45,17 @@ func (err *Error) Error() string {
 
 func newErr(code int, message string) *Error {
 	return &Error{Message: message, Code: code}
+}
+
+type MultipleErrors struct {
+	Errors []error `json:"errors"`
+}
+
+func (multipleErr *MultipleErrors) Error() string {
+	messages := make([]string, len(multipleErr.Errors))
+	for i, error := range multipleErr.Errors {
+		messages[i] = error.Error()
+	}
+
+	return strings.Join(messages, ", ")
 }
