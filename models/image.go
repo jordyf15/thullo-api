@@ -8,9 +8,9 @@ import (
 )
 
 type Image struct {
-	Width    uint   `json:"width" bson:"width"`
-	Filename string `json:"image,omitempty" bson:"image"`
-	URL      string `json:"url,omitempty" bson:"-"`
+	Width uint   `json:"width" bson:"width"`
+	ID    string `json:"id,omitempty" bson:"id"`
+	URL   string `json:"url,omitempty" bson:"-"`
 }
 
 type Images []*Image
@@ -47,7 +47,7 @@ func (image *Image) MarshalJSON() ([]byte, error) {
 	}
 
 	if len(newStruct.URL) > 0 {
-		newStruct.Filename = ""
+		newStruct.ID = ""
 	}
 
 	return json.Marshal(newStruct)

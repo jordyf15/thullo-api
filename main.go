@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v9"
+	"github.com/joho/godotenv"
 	"github.com/jordyf15/thullo-api/middlewares"
 	"github.com/jordyf15/thullo-api/token/repository"
 	"github.com/jordyf15/thullo-api/token/usecase"
@@ -55,6 +56,16 @@ func connectToRedis() {
 
 func health(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusOK)
+}
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	connectToDB()
+	connectToRedis()
 }
 
 func main() {

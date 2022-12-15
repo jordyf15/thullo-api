@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -126,4 +127,11 @@ func (user *User) VerifyFields() []error {
 	}
 
 	return nil
+}
+
+func (user *User) ImagePath(image *Image) string {
+	if len(image.ID) == 0 {
+		return "uploads/users/default_profile_picture.png"
+	}
+	return fmt.Sprintf("uploads/users/%s/%s", user.ID.Hex(), image.ID)
 }

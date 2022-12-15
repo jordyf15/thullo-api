@@ -25,6 +25,10 @@ func Message(status bool, message string) map[string]interface{} {
 	return map[string]interface{}{"status": status, "message": message}
 }
 
+func DataResponse(data interface{}, metadata interface{}) map[string]interface{} {
+	return map[string]interface{}{"data": data, "meta": metadata}
+}
+
 func ToSHA256(toHash string) string {
 	hash := sha256.New()
 	hash.Write([]byte(toHash))
@@ -47,6 +51,10 @@ func RandString(n int) string {
 	}
 
 	return *(*string)(unsafe.Pointer(&b))
+}
+
+func RandFileName(prefix, suffix string) string {
+	return prefix + RandString(8) + suffix
 }
 
 func ToBSON(object interface{}) bson.M {
