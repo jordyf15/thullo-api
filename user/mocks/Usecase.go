@@ -55,6 +55,29 @@ func (_m *Usecase) For(_a0 *models.User) user.InstanceUsecase {
 	return r0
 }
 
+// Login provides a mock function with given fields: email, password
+func (_m *Usecase) Login(email string, password string) (map[string]interface{}, error) {
+	ret := _m.Called(email, password)
+
+	var r0 map[string]interface{}
+	if rf, ok := ret.Get(0).(func(string, string) map[string]interface{}); ok {
+		r0 = rf(email, password)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]interface{})
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(email, password)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // LoginWithGoogle provides a mock function with given fields: token
 func (_m *Usecase) LoginWithGoogle(token string) (map[string]interface{}, error) {
 	ret := _m.Called(token)

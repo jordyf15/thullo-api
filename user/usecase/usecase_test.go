@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestUserUsecase(t *testing.T) {
@@ -30,6 +32,29 @@ type userUsecaseSuite struct {
 	oauthRepo *or.Repository
 	storage   *sr.Storage
 }
+
+func bcryptHash(str string) string {
+	hashedStr, _ := bcrypt.GenerateFromPassword([]byte(str), bcrypt.DefaultCost)
+	return string(hashedStr)
+}
+
+var (
+	userID = primitive.NewObjectID()
+
+	hashedPassword = bcryptHash("Password123!")
+	user1          = &models.User{
+		ID:                userID,
+		Email:             "jojo@gmail.com",
+		EncryptedPassword: hashedPassword,
+		Username:          "jojo",
+		Name:              "joseph joestar",
+		Bio:               "a joestar",
+		Images: []*models.Image{
+			{URL: "image1", Width: 100},
+			{URL: "image2", Width: 400},
+		},
+	}
+)
 
 func (s *userUsecaseSuite) SetupTest() {
 	s.tokenRepo = new(tr.Repository)
@@ -49,13 +74,16 @@ func (s *userUsecaseSuite) SetupTest() {
 	}
 
 	s.userRepo.On("FieldExists", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fieldExists, nil)
+	s.userRepo.On("Create", mock.AnythingOfType("*models.User")).Return(nil)
+	s.userRepo.On("GetByEmail", mock.AnythingOfType("string")).Return(user1, nil)
 	s.storage.On("UploadFile", mock.AnythingOfType("chan<- error"), mock.AnythingOfType("*sync.WaitGroup"), mock.AnythingOfType("*models.Image"), mock.AnythingOfType("*os.File"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
 		arg1 := args[0].(chan<- error)
 		arg1 <- nil
 		arg2 := args[1].(*sync.WaitGroup)
 		arg2.Done()
 	})
-	s.userRepo.On("Create", mock.AnythingOfType("*models.User")).Return(nil)
+	s.storage.On("AssignImageURLToUser", mock.AnythingOfType("*models.User")).Return(nil)
+	s.tokenRepo.On("Create", mock.AnythingOfType("*models.TokenSet")).Return(nil)
 
 	s.usecase = usecase.NewUserUsecase(s.userRepo, s.tokenRepo, s.oauthRepo, s.storage)
 }
@@ -90,4 +118,31 @@ func (s *userUsecaseSuite) TestCreateFieldUsernameAndEmailAlreadyExists() {
 
 	expectedErrors := &custom_errors.MultipleErrors{Errors: []error{custom_errors.ErrUsernameAlreadyExists, custom_errors.ErrEmailAddressAlreadyRegistered}}
 	assert.Equal(s.T(), expectedErrors.Error(), err.Error())
+}
+
+func (s *userUsecaseSuite) TestLoginWrongPassword() {
+	loginResponse, err := s.usecase.Login("jojo@gmail.com", "wrongPassword")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrCurrentPasswordWrong, err)
+	assert.Nil(s.T(), loginResponse)
+}
+
+func (s *userUsecaseSuite) TestLoginSuccessful() {
+	loginResponse, err := s.usecase.Login("jojo@gmail.com", "Password123!")
+
+	assert.NoError(s.T(), err)
+
+	data, isExist := loginResponse["data"].(*models.User)
+	assert.True(s.T(), isExist)
+	assert.Equal(s.T(), userID, data.ID)
+	assert.Equal(s.T(), "jojo@gmail.com", data.Email)
+	assert.Equal(s.T(), "jojo", data.Username)
+	assert.Equal(s.T(), "joseph joestar", data.Name)
+	assert.Equal(s.T(), "a joestar", data.Bio)
+	assert.Len(s.T(), data.Images, 2)
+	assert.Equal(s.T(), "image1", data.Images[0].URL)
+	assert.Equal(s.T(), uint(100), data.Images[0].Width)
+	assert.Equal(s.T(), "image2", data.Images[1].URL)
+	assert.Equal(s.T(), uint(400), data.Images[1].Width)
 }

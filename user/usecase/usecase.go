@@ -20,6 +20,7 @@ import (
 	"github.com/jordyf15/thullo-api/user"
 	"github.com/jordyf15/thullo-api/utils"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -175,7 +176,10 @@ func (usecase *userUsecase) LoginWithGoogle(token string) (map[string]interface{
 			return nil, err
 		}
 
-		usecase.storage.AssignImageURLToUser(user)
+		err = usecase.storage.AssignImageURLToUser(user)
+		if err != nil {
+			return nil, err
+		}
 
 		response := utils.DataResponse(user, map[string]interface{}{
 			"access_token":  accessToken.ToJWTString(),
@@ -259,6 +263,39 @@ func (usecase *userUsecase) LoginWithGoogle(token string) (map[string]interface{
 func (usecase *userUsecase) For(user *models.User) user.InstanceUsecase {
 	instanceUsecase := &userInstanceUsecase{user: user, userUsecase: *usecase}
 	return instanceUsecase
+}
+
+func (usecase *userUsecase) Login(email, password string) (map[string]interface{}, error) {
+	user, err := usecase.userRepo.GetByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password))
+	if err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return nil, custom_errors.ErrCurrentPasswordWrong
+		}
+		return nil, err
+	}
+
+	accessToken, refreshToken, err := usecase.For(user).GenerateTokens()
+	if err != nil {
+		return nil, err
+	}
+
+	err = usecase.storage.AssignImageURLToUser(user)
+	if err != nil {
+		return nil, err
+	}
+
+	response := utils.DataResponse(user, map[string]interface{}{
+		"access_token":  accessToken.ToJWTString(),
+		"refresh_token": refreshToken.ToJWTString(),
+		"expires_at":    accessToken.ExpiresAt,
+	})
+
+	return response, nil
 }
 
 // userInstanceUsecase

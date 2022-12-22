@@ -19,6 +19,7 @@ type Usecase interface {
 	Create(user *models.User, imageFile utils.NamedFileReader) (map[string]interface{}, error)
 	For(user *models.User) InstanceUsecase
 	LoginWithGoogle(token string) (map[string]interface{}, error)
+	Login(email, password string) (map[string]interface{}, error)
 }
 
 type InstanceUsecase interface {

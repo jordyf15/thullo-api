@@ -11,6 +11,7 @@ import (
 type UserController interface {
 	Register(c *gin.Context)
 	LoginWithGoogle(c *gin.Context)
+	Login(c *gin.Context)
 }
 
 type userController struct {
@@ -45,4 +46,14 @@ func (controller *userController) LoginWithGoogle(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, loginResponse)
+}
+
+func (controller *userController) Login(c *gin.Context) {
+	response, err := controller.userUsecase.Login(c.PostForm("email"), c.PostForm("password"))
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }

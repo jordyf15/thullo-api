@@ -33,5 +33,6 @@ func initializeRoutes() {
 	router.POST("tokens/remove", tokenController.DeleteRefreshToken)
 
 	router.POST("register", userController.Register)
+	router.POST("login", userController.Login)
 	router.POST("login/google", userController.LoginWithGoogle)
 }
