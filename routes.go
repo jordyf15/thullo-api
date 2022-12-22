@@ -10,6 +10,8 @@ import (
 
 	ur "github.com/jordyf15/thullo-api/user/repository"
 	uu "github.com/jordyf15/thullo-api/user/usecase"
+
+	or "github.com/jordyf15/thullo-api/oauth/repository"
 )
 
 func initializeRoutes() {
@@ -17,9 +19,10 @@ func initializeRoutes() {
 
 	tokenRepo := tr.NewTokenRepository(dbClient, redisClient)
 	userRepo := ur.NewUserRepository(dbClient)
+	oauthRepo := or.NewOauthRepository(&http.Client{})
 
 	tokenUsecase := tu.NewTokenUsecase(tokenRepo)
-	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, _storage)
+	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, oauthRepo, _storage)
 
 	tokenController := controllers.NewTokenController(tokenUsecase)
 	userController := controllers.NewUserController(userUsecase)
@@ -30,4 +33,5 @@ func initializeRoutes() {
 	router.POST("tokens/remove", tokenController.DeleteRefreshToken)
 
 	router.POST("register", userController.Register)
+	router.POST("login/google", userController.LoginWithGoogle)
 }

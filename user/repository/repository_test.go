@@ -91,3 +91,14 @@ func (s *userRepositorySuite) TestFieldExistsFalse() {
 	assert.NoError(s.T(), err)
 	assert.False(s.T(), isExist)
 }
+
+func (s *userRepositorySuite) TestGetByEmail() {
+	user, err := s.repository.GetByEmail("user1@gmail.com")
+
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), user1.ID, user.ID)
+	assert.Equal(s.T(), user1.Email, user.Email)
+	assert.Equal(s.T(), user1.Username, user.Username)
+	assert.Equal(s.T(), user1.Name, user.Name)
+	assert.Equal(s.T(), user1.Bio, user.Bio)
+}

@@ -51,3 +51,18 @@ func (repo *userRepository) FieldExists(key string, value string) (bool, error) 
 
 	return count > 0, nil
 }
+
+func (repo *userRepository) GetByEmail(email string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+
+	filter := bson.D{
+		{Key: "email", Value: email},
+	}
+
+	foundUser := &models.User{}
+	err := repo.db.FindOne(ctx, filter).Decode(foundUser)
+
+	return foundUser, err
+
+}

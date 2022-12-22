@@ -26,12 +26,13 @@ var (
 	ErrImageSizeTooLarge             = newErr(214, "Image size is too large")
 
 	// token errors
-	ErrMalformedRefreshToken = newErr(301, "Refresh token is malformed")
-	ErrInvalidRefreshToken   = newErr(302, "Invalid refresh token")
-	ErrRefreshTokenNotFound  = newErr(303, "Refresh token not found")
-	ErrMalformedAccessToken  = newErr(304, "Access token is malformed")
-	ErrInvalidAccessToken    = newErr(305, "Invalid access token")
-	ErrAccessTokenExpired    = newErr(306, "Access token expired")
+	ErrMalformedRefreshToken   = newErr(301, "Refresh token is malformed")
+	ErrInvalidRefreshToken     = newErr(302, "Invalid refresh token")
+	ErrRefreshTokenNotFound    = newErr(303, "Refresh token not found")
+	ErrMalformedAccessToken    = newErr(304, "Access token is malformed")
+	ErrInvalidAccessToken      = newErr(305, "Invalid access token")
+	ErrAccessTokenExpired      = newErr(306, "Access token expired")
+	ErrGoogleOauthTokenExpired = newErr(307, "Google oauth token expired")
 )
 
 type Error struct {

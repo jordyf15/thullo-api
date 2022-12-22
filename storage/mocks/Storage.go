@@ -16,6 +16,20 @@ type Storage struct {
 	mock.Mock
 }
 
+// AssignImageURLToUser provides a mock function with given fields: _a0
+func (_m *Storage) AssignImageURLToUser(_a0 *models.User) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UploadFile provides a mock function with given fields: respond, wg, currentImage, file, metadata
 func (_m *Storage) UploadFile(respond chan<- error, wg *sync.WaitGroup, currentImage *models.Image, file *os.File, metadata map[string]string) {
 	_m.Called(respond, wg, currentImage, file, metadata)

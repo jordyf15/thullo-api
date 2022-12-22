@@ -59,7 +59,7 @@ var (
 		CreatedAt: time.Now(),
 	}
 
-	uscRegisterResponse = utils.DataResponse(uscUser, map[string]interface{}{
+	uscLoginResponse = utils.DataResponse(uscUser, map[string]interface{}{
 		"access_token":  "accessToken",
 		"refresh_token": "refreshToken",
 		"expires_at":    1,
@@ -69,31 +69,25 @@ var (
 func (s *userControllerSuite) SetupTest() {
 	usecaseMock := new(mocks.Usecase)
 
-	usecaseMock.On("Create", mock.AnythingOfType("*models.User")).Return(uscRegisterResponse, nil)
+	usecaseMock.On("LoginWithGoogle", mock.AnythingOfType("string")).Return(uscLoginResponse, nil)
 
 	s.controller = controllers.NewUserController(usecaseMock)
 	s.response = httptest.NewRecorder()
 	s.context, s.router = gin.CreateTestContext(s.response)
 
-	s.router.POST("/register", s.controller.Register)
+	s.router.POST("/login/google", s.controller.LoginWithGoogle)
 }
 
-func (s *userControllerSuite) TestRegister() {
+func (s *userControllerSuite) TestLoginWithGoogle() {
 	var receivedResponse map[string]interface{}
 
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
-	nameField, _ := writer.CreateFormField("name")
-	nameField.Write([]byte("joseph joestart"))
-	usernameField, _ := writer.CreateFormField("username")
-	usernameField.Write([]byte("jojo"))
-	emailField, _ := writer.CreateFormField("email")
-	emailField.Write([]byte("jojo@gmail.com"))
-	passwordField, _ := writer.CreateFormField("password")
-	passwordField.Write([]byte("Jojo123!"))
+	token, _ := writer.CreateFormField("token")
+	token.Write([]byte("token"))
 	writer.Close()
 
-	s.context.Request, _ = http.NewRequest("POST", "/register", buf)
+	s.context.Request, _ = http.NewRequest("POST", "/login/google", buf)
 	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
 	s.router.ServeHTTP(s.response, s.context.Request)
 	json.NewDecoder(s.response.Body).Decode(&receivedResponse)

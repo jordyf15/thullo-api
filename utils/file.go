@@ -3,6 +3,8 @@ package utils
 import (
 	"fmt"
 	"io"
+	"net/http"
+	"os"
 	"strings"
 )
 
@@ -43,4 +45,21 @@ func GetFileExtension(filename string) string {
 
 	splitStr := strings.Split(filename, ".")
 	return splitStr[len(splitStr)-1]
+}
+
+func DownloadFile(filepath string, url string) (http.Header, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	out, err := os.Create(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return resp.Header, err
 }

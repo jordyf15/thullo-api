@@ -26,6 +26,11 @@ type imgurStorage struct {
 	accessTokenExpired int64
 }
 
+type errorResult struct {
+	string
+	error
+}
+
 func NewImgurStorage(client *http.Client) Storage {
 	return &imgurStorage{client: client}
 }
@@ -90,7 +95,7 @@ func (api *imgurStorage) UploadFile(respond chan<- error, wg *sync.WaitGroup, cu
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		respond <- custom_errors.ErrUnknownErrorOccured
 		return
 	}
@@ -111,6 +116,71 @@ func (api *imgurStorage) UploadFile(respond chan<- error, wg *sync.WaitGroup, cu
 
 	currentImage.ID = uploadFileRes.Data.ID
 	currentImage.URL = uploadFileRes.Data.Link
+
+	respond <- nil
+}
+
+func (api *imgurStorage) AssignImageURLToUser(user *models.User) error {
+	var wg sync.WaitGroup
+	errorResults := make(chan error, len(user.Images))
+
+	for _, image := range user.Images {
+		wg.Add(1)
+		go api.getImage(errorResults, &wg, image)
+	}
+
+	wg.Wait()
+	close(errorResults)
+
+	for errorResult := range errorResults {
+		if errorResult != nil {
+			return custom_errors.ErrUnknownErrorOccured
+		}
+	}
+
+	return nil
+}
+
+func (api *imgurStorage) getImage(respond chan<- error, wg *sync.WaitGroup, currentImage *models.Image) {
+	if wg != nil {
+		defer wg.Done()
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/3/image/%s", baseURL, currentImage.ID), nil)
+	if err != nil {
+		respond <- err
+		return
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("CLIENT-ID %s", os.Getenv("IMGUR_CLIENT_ID")))
+
+	res, err := api.client.Do(req)
+	if err != nil {
+		respond <- err
+		return
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		respond <- custom_errors.ErrUnknownErrorOccured
+		return
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		respond <- err
+		return
+	}
+
+	getImageRes := &getImageResponse{}
+
+	err = json.Unmarshal(body, getImageRes)
+	if err != nil {
+		respond <- err
+		return
+	}
+
+	currentImage.URL = getImageRes.Data.Link
 
 	respond <- nil
 }
@@ -175,6 +245,16 @@ type uploadFileData struct {
 	Height      int    `json:"height"`
 	Size        int64  `json:"size"`
 	Link        string `json:"link"`
+}
+
+type getImageResponse struct {
+	Status  int          `json:"status"`
+	Success bool         `json:"success"`
+	Data    getImageData `json:"data"`
+}
+
+type getImageData struct {
+	Link string `json:"link"`
 }
 
 type imgurAuthorizationResponse struct {

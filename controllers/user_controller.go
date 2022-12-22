@@ -10,15 +10,12 @@ import (
 
 type UserController interface {
 	Register(c *gin.Context)
+	LoginWithGoogle(c *gin.Context)
 }
 
 type userController struct {
 	userUsecase user.Usecase
 }
-
-const (
-	maxPictureSize = 5 * 1024 * 1024
-)
 
 func NewUserController(userUsecase user.Usecase) UserController {
 	return &userController{userUsecase: userUsecase}
@@ -31,11 +28,21 @@ func (controller *userController) Register(c *gin.Context) {
 	user.Email = c.PostForm("email")
 	user.Password = c.PostForm("password")
 
-	resp, err := controller.userUsecase.Create(user)
+	resp, err := controller.userUsecase.Create(user, nil)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func (controller *userController) LoginWithGoogle(c *gin.Context) {
+	loginResponse, err := controller.userUsecase.LoginWithGoogle(c.PostForm("token"))
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, loginResponse)
 }

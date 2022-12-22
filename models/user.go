@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	minUsernameLength = 3
+	MinUsernameLength = 3
 	maxUsernameLength = 30
 	minNameLength     = 1
 	maxNameLength     = 30
@@ -106,7 +106,7 @@ func (user *User) VerifyFields() []error {
 		}
 	}
 
-	if len(user.Username) < minUsernameLength {
+	if len(user.Username) < MinUsernameLength {
 		errors = append(errors, custom_errors.ErrUsernameTooShort)
 	}
 

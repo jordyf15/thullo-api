@@ -6,6 +6,7 @@ import (
 
 	"github.com/jordyf15/thullo-api/custom_errors"
 	"github.com/jordyf15/thullo-api/models"
+	or "github.com/jordyf15/thullo-api/oauth/mocks"
 	sr "github.com/jordyf15/thullo-api/storage/mocks"
 	tr "github.com/jordyf15/thullo-api/token/mocks"
 	"github.com/jordyf15/thullo-api/user"
@@ -26,12 +27,14 @@ type userUsecaseSuite struct {
 	usecase   user.Usecase
 	userRepo  *ur.Repository
 	tokenRepo *tr.Repository
+	oauthRepo *or.Repository
 	storage   *sr.Storage
 }
 
 func (s *userUsecaseSuite) SetupTest() {
 	s.tokenRepo = new(tr.Repository)
 	s.userRepo = new(ur.Repository)
+	s.oauthRepo = new(or.Repository)
 	s.storage = new(sr.Storage)
 
 	fieldExists := func(key, value string) bool {
@@ -54,7 +57,7 @@ func (s *userUsecaseSuite) SetupTest() {
 	})
 	s.userRepo.On("Create", mock.AnythingOfType("*models.User")).Return(nil)
 
-	s.usecase = usecase.NewUserUsecase(s.userRepo, s.tokenRepo, s.storage)
+	s.usecase = usecase.NewUserUsecase(s.userRepo, s.tokenRepo, s.oauthRepo, s.storage)
 }
 
 func (s *userUsecaseSuite) TestCreateInvalidFields() {
@@ -65,7 +68,7 @@ func (s *userUsecaseSuite) TestCreateInvalidFields() {
 		Password: "",
 	}
 
-	result, err := s.usecase.Create(user)
+	result, err := s.usecase.Create(user, nil)
 	assert.Error(s.T(), err)
 	assert.Nil(s.T(), result)
 
@@ -81,7 +84,7 @@ func (s *userUsecaseSuite) TestCreateFieldUsernameAndEmailAlreadyExists() {
 		Password: "Password123!",
 	}
 
-	result, err := s.usecase.Create(user)
+	result, err := s.usecase.Create(user, nil)
 	assert.Error(s.T(), err)
 	assert.Nil(s.T(), result)
 
