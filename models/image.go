@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -36,19 +35,4 @@ func (i *Images) MarshalBSON() ([]byte, error) {
 
 	type ImagesAlias Images
 	return bson.Marshal((*ImagesAlias)(i))
-}
-
-func (image *Image) MarshalJSON() ([]byte, error) {
-	type Alias Image
-	newStruct := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(image),
-	}
-
-	if len(newStruct.URL) > 0 {
-		newStruct.ID = ""
-	}
-
-	return json.Marshal(newStruct)
 }

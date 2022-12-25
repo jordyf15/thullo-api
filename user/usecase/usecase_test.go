@@ -12,6 +12,7 @@ import (
 	"github.com/jordyf15/thullo-api/user"
 	ur "github.com/jordyf15/thullo-api/user/mocks"
 	"github.com/jordyf15/thullo-api/user/usecase"
+	ubr "github.com/jordyf15/thullo-api/user_boards/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -26,11 +27,12 @@ func TestUserUsecase(t *testing.T) {
 type userUsecaseSuite struct {
 	suite.Suite
 
-	usecase   user.Usecase
-	userRepo  *ur.Repository
-	tokenRepo *tr.Repository
-	oauthRepo *or.Repository
-	storage   *sr.Storage
+	usecase        user.Usecase
+	userRepo       *ur.Repository
+	tokenRepo      *tr.Repository
+	oauthRepo      *or.Repository
+	userBoardsRepo *ubr.Repository
+	storage        *sr.Storage
 }
 
 func bcryptHash(str string) string {
@@ -60,6 +62,7 @@ func (s *userUsecaseSuite) SetupTest() {
 	s.tokenRepo = new(tr.Repository)
 	s.userRepo = new(ur.Repository)
 	s.oauthRepo = new(or.Repository)
+	s.userBoardsRepo = new(ubr.Repository)
 	s.storage = new(sr.Storage)
 
 	fieldExists := func(key, value string) bool {
@@ -84,8 +87,9 @@ func (s *userUsecaseSuite) SetupTest() {
 	})
 	s.storage.On("AssignImageURLToUser", mock.AnythingOfType("*models.User")).Return(nil)
 	s.tokenRepo.On("Create", mock.AnythingOfType("*models.TokenSet")).Return(nil)
+	s.userBoardsRepo.On("Create", mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 
-	s.usecase = usecase.NewUserUsecase(s.userRepo, s.tokenRepo, s.oauthRepo, s.storage)
+	s.usecase = usecase.NewUserUsecase(s.userRepo, s.tokenRepo, s.oauthRepo, s.userBoardsRepo, s.storage)
 }
 
 func (s *userUsecaseSuite) TestCreateInvalidFields() {

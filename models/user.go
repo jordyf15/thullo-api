@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"encoding/json"
 	"regexp"
 	"strings"
 	"time"
@@ -129,9 +129,22 @@ func (user *User) VerifyFields() []error {
 	return nil
 }
 
-func (user *User) ImagePath(image *Image) string {
-	if len(image.ID) == 0 {
-		return "uploads/users/default_profile_picture.png"
+func (user *User) EmptyImageIDs() {
+	for _, image := range user.Images {
+		image.ID = ""
 	}
-	return fmt.Sprintf("uploads/users/%s/%s", user.ID.Hex(), image.ID)
+}
+
+func (user *User) MarshalJSON() ([]byte, error) {
+	type Alias User
+	newStruct := &struct {
+		*Alias
+		CreatedAt string `json:"created_at"`
+	}{
+		Alias: (*Alias)(user),
+	}
+
+	newStruct.CreatedAt = user.CreatedAt.Format("2006-01-02T15:04:05-0700")
+
+	return json.Marshal(newStruct)
 }

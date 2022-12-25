@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/db"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v9"
@@ -22,6 +25,7 @@ import (
 var (
 	dbClient    *mongo.Database
 	redisClient *redis.Client
+	rtdbClient  *db.Client
 	router      *gin.Engine
 )
 
@@ -54,6 +58,20 @@ func connectToRedis() {
 	fmt.Println(pong, err)
 }
 
+func connectToRTDB() {
+	ctx := context.Background()
+	conf := &firebase.Config{DatabaseURL: os.Getenv("FIREBASE_DB_URL")}
+	app, err := firebase.NewApp(ctx, conf)
+	if err != nil {
+		log.Fatalf("Unable to initialize firebase realtime db")
+	}
+
+	rtdbClient, err = app.Database(ctx)
+	if err != nil {
+		log.Fatalln("Error initializing firebase database client: ", err)
+	}
+}
+
 func health(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusOK)
 }
@@ -65,6 +83,7 @@ func init() {
 	}
 
 	connectToDB()
+	connectToRTDB()
 	connectToRedis()
 }
 

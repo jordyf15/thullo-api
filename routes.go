@@ -9,7 +9,12 @@ import (
 	tu "github.com/jordyf15/thullo-api/token/usecase"
 
 	ur "github.com/jordyf15/thullo-api/user/repository"
+
+	br "github.com/jordyf15/thullo-api/board/repository"
+	bu "github.com/jordyf15/thullo-api/board/usecase"
+	unr "github.com/jordyf15/thullo-api/unsplash/repository"
 	uu "github.com/jordyf15/thullo-api/user/usecase"
+	ubr "github.com/jordyf15/thullo-api/user_boards/repository"
 
 	or "github.com/jordyf15/thullo-api/oauth/repository"
 )
@@ -20,12 +25,17 @@ func initializeRoutes() {
 	tokenRepo := tr.NewTokenRepository(dbClient, redisClient)
 	userRepo := ur.NewUserRepository(dbClient)
 	oauthRepo := or.NewOauthRepository(&http.Client{})
+	boardRepo := br.NewBoardRepository(rtdbClient)
+	userBoardsRepo := ubr.NewUserBoardsRepository(rtdbClient)
+	unsplashRepo := unr.NewUnsplashRepository(&http.Client{})
 
 	tokenUsecase := tu.NewTokenUsecase(tokenRepo)
-	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, oauthRepo, _storage)
+	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, oauthRepo, userBoardsRepo, _storage)
+	boardUsecase := bu.NewBoardUsecase(boardRepo, unsplashRepo, userBoardsRepo, _storage)
 
 	tokenController := controllers.NewTokenController(tokenUsecase)
 	userController := controllers.NewUserController(userUsecase)
+	boardController := controllers.NewBoardController(boardUsecase)
 
 	router.GET("_health", health)
 
@@ -35,4 +45,6 @@ func initializeRoutes() {
 	router.POST("register", userController.Register)
 	router.POST("login", userController.Login)
 	router.POST("login/google", userController.LoginWithGoogle)
+
+	router.POST("boards", boardController.Create)
 }
