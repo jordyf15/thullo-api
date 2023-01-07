@@ -46,11 +46,11 @@ func (usecase *boardUsecase) Create(userID primitive.ObjectID, title string, vis
 	}
 
 	if title == "" {
-		errors = append(errors, custom_errors.ErrTitleEmpty)
+		errors = append(errors, custom_errors.ErrBoardTitleEmpty)
 	}
 
 	if visibility != models.BoardVisibilityPrivate && visibility != models.BoardVisibilityPublic {
-		errors = append(errors, custom_errors.ErrInvalidVisibility)
+		errors = append(errors, custom_errors.ErrBoardInvalidVisibility)
 	}
 
 	if len(errors) > 0 {

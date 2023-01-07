@@ -75,7 +75,7 @@ func (s *boardUsecaseSuite) TestCreateInvalidBoardData() {
 		"photo_id": "picture-1",
 	})
 
-	expectedErrors := &custom_errors.MultipleErrors{Errors: []error{custom_errors.ErrInvalidCoverSource, custom_errors.ErrUnsplashFocalPointYTooHigh, custom_errors.ErrTitleEmpty, custom_errors.ErrInvalidVisibility}}
+	expectedErrors := &custom_errors.MultipleErrors{Errors: []error{custom_errors.ErrInvalidCoverSource, custom_errors.ErrUnsplashFocalPointYTooHigh, custom_errors.ErrBoardTitleEmpty, custom_errors.ErrBoardInvalidVisibility}}
 
 	assert.Equal(s.T(), expectedErrors.Error(), err.Error())
 	s.boardRepo.AssertNumberOfCalls(s.T(), "Create", 0)

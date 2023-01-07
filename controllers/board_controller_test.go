@@ -70,11 +70,11 @@ func (s *boardControllerSuite) TestCreateEmptyCover() {
 
 	msg, isExist := error1["message"]
 	assert.True(s.T(), isExist)
-	assert.Equal(s.T(), custom_errors.ErrCoverEmpty.Message, msg)
+	assert.Equal(s.T(), custom_errors.ErrBoardCoverEmpty.Message, msg)
 
 	code, isExist := error1["code"]
 	assert.True(s.T(), isExist)
-	assert.Equal(s.T(), float64(custom_errors.ErrCoverEmpty.Code), code)
+	assert.Equal(s.T(), float64(custom_errors.ErrBoardCoverEmpty.Code), code)
 }
 
 func (s *boardControllerSuite) TestCreateMalformedCover() {

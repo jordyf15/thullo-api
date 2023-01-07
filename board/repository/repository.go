@@ -7,6 +7,7 @@ import (
 
 	"firebase.google.com/go/v4/db"
 	"github.com/jordyf15/thullo-api/board"
+	"github.com/jordyf15/thullo-api/custom_errors"
 	"github.com/jordyf15/thullo-api/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -28,4 +29,22 @@ func (repo *boardRepository) Create(board *models.Board) error {
 	ref := repo.dbClient.NewRef(fmt.Sprintf("boards/%s", board.ID.Hex()))
 
 	return ref.Set(ctx, board)
+}
+
+func (repo *boardRepository) GetBoardByID(boardID primitive.ObjectID) (*models.Board, error) {
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("boards/%s", boardID.Hex()))
+
+	board := &models.Board{}
+
+	err := ref.Get(ctx, &board)
+	if err != nil {
+		return nil, err
+	}
+
+	if board == nil {
+		return nil, custom_errors.ErrRecordNotFound
+	}
+
+	return board, nil
 }

@@ -62,3 +62,29 @@ func (board *Board) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(newStruct)
 }
+
+func (board *Board) UnmarshalJSON(data []byte) error {
+	type Alias Board
+	alias := &struct {
+		*Alias
+		CreatedAt string `json:"created_at"`
+		UpdatedAt string `json:"updated_at"`
+	}{Alias: (*Alias)(board)}
+
+	err := json.Unmarshal(data, &alias)
+	if err != nil {
+		return err
+	}
+
+	board.CreatedAt, err = time.Parse("2006-01-02T15:04:05-0700", alias.CreatedAt)
+	if err != nil {
+		return err
+	}
+
+	board.UpdatedAt, err = time.Parse("2006-01-02T15:04:05-0700", alias.UpdatedAt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

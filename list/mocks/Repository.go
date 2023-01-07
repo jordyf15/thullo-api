@@ -15,11 +15,11 @@ type Repository struct {
 }
 
 // Create provides a mock function with given fields: _a0
-func (_m *Repository) Create(_a0 *models.Board) error {
+func (_m *Repository) Create(_a0 *models.List) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.Board) error); ok {
+	if rf, ok := ret.Get(0).(func(*models.List) error); ok {
 		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
@@ -28,16 +28,16 @@ func (_m *Repository) Create(_a0 *models.Board) error {
 	return r0
 }
 
-// GetBoardByID provides a mock function with given fields: boardID
-func (_m *Repository) GetBoardByID(boardID primitive.ObjectID) (*models.Board, error) {
+// GetBoardLists provides a mock function with given fields: boardID
+func (_m *Repository) GetBoardLists(boardID primitive.ObjectID) ([]*models.List, error) {
 	ret := _m.Called(boardID)
 
-	var r0 *models.Board
-	if rf, ok := ret.Get(0).(func(primitive.ObjectID) *models.Board); ok {
+	var r0 []*models.List
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID) []*models.List); ok {
 		r0 = rf(boardID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Board)
+			r0 = ret.Get(0).([]*models.List)
 		}
 	}
 

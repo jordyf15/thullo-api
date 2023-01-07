@@ -46,7 +46,7 @@ func (controller *boardController) Create(c *gin.Context) {
 			return
 		}
 	} else {
-		respondBasedOnError(c, custom_errors.ErrCoverEmpty)
+		respondBasedOnError(c, custom_errors.ErrBoardCoverEmpty)
 		return
 	}
 

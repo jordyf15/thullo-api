@@ -14,6 +14,7 @@ var (
 
 type Repository interface {
 	Create(board *models.Board) error
+	GetBoardByID(boardID primitive.ObjectID) (*models.Board, error)
 }
 
 type Usecase interface {

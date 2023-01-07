@@ -34,15 +34,20 @@ var (
 	ErrAccessTokenExpired      = newErr(306, "Access token expired")
 	ErrGoogleOauthTokenExpired = newErr(307, "Google oauth token expired")
 
-	// board errors
-	ErrTitleEmpty                 = newErr(401, "Title is empty")
-	ErrCoverEmpty                 = newErr(402, "Cover is empty")
-	ErrMalformedCover             = newErr(403, "Cover is malformed")
-	ErrUnknownUnsplashPhotoID     = newErr(404, "Unknown unsplash photo ID")
-	ErrInvalidCoverSource         = newErr(405, "Source of cover is invalid")
-	ErrUnsplashFocalPointYTooHigh = newErr(406, "Unsplash focal point Y is too high")
-	ErrUnsplashFocalPointYTooLow  = newErr(407, "Unsplash focal point Y is too low")
-	ErrInvalidVisibility          = newErr(408, "Visibility is invalid")
+	// cover errors
+	ErrMalformedCover             = newErr(401, "Cover is malformed")
+	ErrUnknownUnsplashPhotoID     = newErr(402, "Unknown unsplash photo ID")
+	ErrInvalidCoverSource         = newErr(403, "Source of cover is invalid")
+	ErrUnsplashFocalPointYTooHigh = newErr(404, "Unsplash focal point Y is too high")
+	ErrUnsplashFocalPointYTooLow  = newErr(405, "Unsplash focal point Y is too low")
+
+	// Board errors
+	ErrBoardTitleEmpty        = newErr(501, "Board title is empty")
+	ErrBoardCoverEmpty        = newErr(502, "Board cover is empty")
+	ErrBoardInvalidVisibility = newErr(503, "Board visibility is invalid")
+
+	// list errors
+	ErrListTitleEmpty = newErr(601, "List title is empty")
 )
 
 type Error struct {
