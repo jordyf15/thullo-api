@@ -15,16 +15,14 @@ const (
 )
 
 type Board struct {
-	ID          primitive.ObjectID   `json:"id"`
-	Title       string               `json:"title"`
-	Description string               `json:"description"`
-	Visibility  BoardVisibility      `json:"visibility"`
-	OwnerID     primitive.ObjectID   `json:"owner_id"`
-	MemberIDs   []primitive.ObjectID `json:"member_ids"`
-	ListIDs     []primitive.ObjectID `json:"list_ids"`
-	Cover       *BoardCover          `json:"cover"`
-	CreatedAt   time.Time            `json:"created_at"`
-	UpdatedAt   time.Time            `json:"updated_at"`
+	ID          primitive.ObjectID `json:"id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Visibility  BoardVisibility    `json:"visibility"`
+	OwnerID     primitive.ObjectID `json:"owner_id"`
+	Cover       *BoardCover        `json:"cover"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
 }
 
 type BoardCover struct {
