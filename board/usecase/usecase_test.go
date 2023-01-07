@@ -11,7 +11,6 @@ import (
 	"github.com/jordyf15/thullo-api/custom_errors"
 	sr "github.com/jordyf15/thullo-api/storage/mocks"
 	unr "github.com/jordyf15/thullo-api/unsplash/mocks"
-	ubr "github.com/jordyf15/thullo-api/user_boards/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -33,16 +32,14 @@ type boardUsecaseSuite struct {
 
 	usecase board.Usecase
 
-	boardRepo      *br.Repository
-	unsplashRepo   *unr.Repository
-	userBoardsRepo *ubr.Repository
-	storage        *sr.Storage
+	boardRepo    *br.Repository
+	unsplashRepo *unr.Repository
+	storage      *sr.Storage
 }
 
 func (s *boardUsecaseSuite) SetupTest() {
 	s.boardRepo = new(br.Repository)
 	s.unsplashRepo = new(unr.Repository)
-	s.userBoardsRepo = new(ubr.Repository)
 	s.storage = new(sr.Storage)
 
 	img1, _ = os.Create("image1.jpg")
@@ -57,9 +54,8 @@ func (s *boardUsecaseSuite) SetupTest() {
 		arg2.Done()
 	})
 	s.boardRepo.On("Create", mock.AnythingOfType("*models.Board")).Return(nil)
-	s.userBoardsRepo.On("AddBoard", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 
-	s.usecase = usecase.NewBoardUsecase(s.boardRepo, s.unsplashRepo, s.userBoardsRepo, s.storage)
+	s.usecase = usecase.NewBoardUsecase(s.boardRepo, s.unsplashRepo, s.storage)
 }
 
 func (s *boardUsecaseSuite) AfterTest(suiteName, testName string) {
@@ -83,7 +79,6 @@ func (s *boardUsecaseSuite) TestCreateInvalidBoardData() {
 
 	assert.Equal(s.T(), expectedErrors.Error(), err.Error())
 	s.boardRepo.AssertNumberOfCalls(s.T(), "Create", 0)
-	s.userBoardsRepo.AssertNumberOfCalls(s.T(), "AddBoard", 0)
 }
 
 func (s *boardUsecaseSuite) TestCreateSuccessful() {
@@ -95,5 +90,4 @@ func (s *boardUsecaseSuite) TestCreateSuccessful() {
 
 	assert.NoError(s.T(), err)
 	s.boardRepo.AssertNumberOfCalls(s.T(), "Create", 1)
-	s.userBoardsRepo.AssertNumberOfCalls(s.T(), "AddBoard", 1)
 }
