@@ -10,20 +10,18 @@ import (
 	"github.com/jordyf15/thullo-api/models"
 	"github.com/jordyf15/thullo-api/storage"
 	"github.com/jordyf15/thullo-api/unsplash"
-	"github.com/jordyf15/thullo-api/user_boards"
 	"github.com/jordyf15/thullo-api/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type boardUsecase struct {
-	boardRepo      board.Repository
-	unsplashRepo   unsplash.Repository
-	userBoardsRepo user_boards.Repository
-	storage        storage.Storage
+	boardRepo    board.Repository
+	unsplashRepo unsplash.Repository
+	storage      storage.Storage
 }
 
-func NewBoardUsecase(boardRepo board.Repository, unsplashRepo unsplash.Repository, userBoardsRepo user_boards.Repository, storage storage.Storage) board.Usecase {
-	return &boardUsecase{boardRepo: boardRepo, unsplashRepo: unsplashRepo, userBoardsRepo: userBoardsRepo, storage: storage}
+func NewBoardUsecase(boardRepo board.Repository, unsplashRepo unsplash.Repository, storage storage.Storage) board.Usecase {
+	return &boardUsecase{boardRepo: boardRepo, unsplashRepo: unsplashRepo, storage: storage}
 }
 
 func (usecase *boardUsecase) Create(userID primitive.ObjectID, title string, visibility string, cover map[string]interface{}) error {
@@ -121,11 +119,6 @@ func (usecase *boardUsecase) Create(userID primitive.ObjectID, title string, vis
 	_board.EmptyImageURLs()
 
 	err = usecase.boardRepo.Create(_board)
-	if err != nil {
-		return err
-	}
-
-	err = usecase.userBoardsRepo.AddBoard(userID, _board.ID)
 	if err != nil {
 		return err
 	}

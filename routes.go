@@ -14,7 +14,6 @@ import (
 	bu "github.com/jordyf15/thullo-api/board/usecase"
 	unr "github.com/jordyf15/thullo-api/unsplash/repository"
 	uu "github.com/jordyf15/thullo-api/user/usecase"
-	ubr "github.com/jordyf15/thullo-api/user_boards/repository"
 
 	or "github.com/jordyf15/thullo-api/oauth/repository"
 )
@@ -26,12 +25,11 @@ func initializeRoutes() {
 	userRepo := ur.NewUserRepository(dbClient)
 	oauthRepo := or.NewOauthRepository(&http.Client{})
 	boardRepo := br.NewBoardRepository(rtdbClient)
-	userBoardsRepo := ubr.NewUserBoardsRepository(rtdbClient)
 	unsplashRepo := unr.NewUnsplashRepository(&http.Client{})
 
 	tokenUsecase := tu.NewTokenUsecase(tokenRepo)
-	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, oauthRepo, userBoardsRepo, _storage)
-	boardUsecase := bu.NewBoardUsecase(boardRepo, unsplashRepo, userBoardsRepo, _storage)
+	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, oauthRepo, _storage)
+	boardUsecase := bu.NewBoardUsecase(boardRepo, unsplashRepo, _storage)
 
 	tokenController := controllers.NewTokenController(tokenUsecase)
 	userController := controllers.NewUserController(userUsecase)

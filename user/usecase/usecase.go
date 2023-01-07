@@ -18,7 +18,6 @@ import (
 	"github.com/jordyf15/thullo-api/storage"
 	"github.com/jordyf15/thullo-api/token"
 	"github.com/jordyf15/thullo-api/user"
-	"github.com/jordyf15/thullo-api/user_boards"
 	"github.com/jordyf15/thullo-api/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -30,11 +29,10 @@ var (
 )
 
 type userUsecase struct {
-	userRepo       user.Repository
-	tokenRepo      token.Repository
-	oauthRepo      oauth.Repository
-	userBoardsRepo user_boards.Repository
-	storage        storage.Storage
+	userRepo  user.Repository
+	tokenRepo token.Repository
+	oauthRepo oauth.Repository
+	storage   storage.Storage
 }
 
 type userInstanceUsecase struct {
@@ -42,8 +40,8 @@ type userInstanceUsecase struct {
 	userUsecase
 }
 
-func NewUserUsecase(userRepo user.Repository, tokenRepo token.Repository, oauthRepo oauth.Repository, userBoardsRepo user_boards.Repository, storage storage.Storage) user.Usecase {
-	return &userUsecase{userRepo: userRepo, tokenRepo: tokenRepo, oauthRepo: oauthRepo, userBoardsRepo: userBoardsRepo, storage: storage}
+func NewUserUsecase(userRepo user.Repository, tokenRepo token.Repository, oauthRepo oauth.Repository, storage storage.Storage) user.Usecase {
+	return &userUsecase{userRepo: userRepo, tokenRepo: tokenRepo, oauthRepo: oauthRepo, storage: storage}
 }
 
 func (usecase *userUsecase) Create(_user *models.User, imageFile utils.NamedFileReader) (map[string]interface{}, error) {
@@ -147,11 +145,6 @@ func (usecase *userUsecase) Create(_user *models.User, imageFile utils.NamedFile
 	<-uploadChannels
 
 	if err := usecase.userRepo.Create(_user); err != nil {
-		return nil, err
-	}
-
-	err = usecase.userBoardsRepo.Create(_user.ID)
-	if err != nil {
 		return nil, err
 	}
 
