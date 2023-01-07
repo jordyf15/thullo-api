@@ -51,6 +51,43 @@ func (_m *Repository) GetBoardLists(boardID primitive.ObjectID) ([]*models.List,
 	return r0, r1
 }
 
+// GetListByID provides a mock function with given fields: listID
+func (_m *Repository) GetListByID(listID primitive.ObjectID) (*models.List, error) {
+	ret := _m.Called(listID)
+
+	var r0 *models.List
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID) *models.List); ok {
+		r0 = rf(listID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.List)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(primitive.ObjectID) error); ok {
+		r1 = rf(listID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateList provides a mock function with given fields: listID, _a1
+func (_m *Repository) UpdateList(listID primitive.ObjectID, _a1 *models.List) error {
+	ret := _m.Called(listID, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, *models.List) error); ok {
+		r0 = rf(listID, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 type mockConstructorTestingTNewRepository interface {
 	mock.TestingT
 	Cleanup(func())

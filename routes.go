@@ -52,4 +52,5 @@ func initializeRoutes() {
 	router.POST("boards", boardController.Create)
 
 	router.POST("boards/:board_id/lists", listController.Create)
+	router.PATCH("boards/:board_id/lists/:list_id", listController.Update)
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"firebase.google.com/go/v4/db"
+	"github.com/jordyf15/thullo-api/custom_errors"
 	"github.com/jordyf15/thullo-api/list"
 	"github.com/jordyf15/thullo-api/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -48,4 +49,29 @@ func (repo *listRepository) GetBoardLists(boardID primitive.ObjectID) ([]*models
 	}
 
 	return lists, nil
+}
+
+func (repo *listRepository) GetListByID(listID primitive.ObjectID) (*models.List, error) {
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("lists/%s", listID.Hex()))
+
+	list := &models.List{}
+
+	err := ref.Get(ctx, &list)
+	if err != nil {
+		return nil, err
+	}
+
+	if list == nil {
+		return nil, custom_errors.ErrRecordNotFound
+	}
+
+	return list, nil
+}
+
+func (repo *listRepository) UpdateList(listID primitive.ObjectID, list *models.List) error {
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("lists/%s", listID.Hex()))
+
+	return ref.Set(ctx, list)
 }

@@ -26,6 +26,34 @@ func (_m *Usecase) Create(boardID primitive.ObjectID, title string) error {
 	return r0
 }
 
+// UpdatePosition provides a mock function with given fields: boardID, listID, newPosition
+func (_m *Usecase) UpdatePosition(boardID primitive.ObjectID, listID primitive.ObjectID, newPosition int) error {
+	ret := _m.Called(boardID, listID, newPosition)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, int) error); ok {
+		r0 = rf(boardID, listID, newPosition)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateTitle provides a mock function with given fields: listID, title
+func (_m *Usecase) UpdateTitle(listID primitive.ObjectID, title string) error {
+	ret := _m.Called(listID, title)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, string) error); ok {
+		r0 = rf(listID, title)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 type mockConstructorTestingTNewUsecase interface {
 	mock.TestingT
 	Cleanup(func())
