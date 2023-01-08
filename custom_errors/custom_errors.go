@@ -48,6 +48,9 @@ var (
 
 	// list errors
 	ErrListTitleEmpty = newErr(601, "List title is empty")
+
+	// card errors
+	ErrCardTitleEmpty = newErr(701, "Card title is empty")
 )
 
 type Error struct {

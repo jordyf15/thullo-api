@@ -8,10 +8,12 @@ import (
 	tr "github.com/jordyf15/thullo-api/token/repository"
 	tu "github.com/jordyf15/thullo-api/token/usecase"
 
+	cr "github.com/jordyf15/thullo-api/card/repository"
 	ur "github.com/jordyf15/thullo-api/user/repository"
 
 	br "github.com/jordyf15/thullo-api/board/repository"
 	bu "github.com/jordyf15/thullo-api/board/usecase"
+	cu "github.com/jordyf15/thullo-api/card/usecase"
 	lr "github.com/jordyf15/thullo-api/list/repository"
 	lu "github.com/jordyf15/thullo-api/list/usecase"
 	unr "github.com/jordyf15/thullo-api/unsplash/repository"
@@ -29,16 +31,19 @@ func initializeRoutes() {
 	boardRepo := br.NewBoardRepository(rtdbClient)
 	unsplashRepo := unr.NewUnsplashRepository(&http.Client{})
 	listRepo := lr.NewListRepository(rtdbClient)
+	cardRepo := cr.NewCardRepository(rtdbClient)
 
 	tokenUsecase := tu.NewTokenUsecase(tokenRepo)
 	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, oauthRepo, _storage)
 	boardUsecase := bu.NewBoardUsecase(boardRepo, unsplashRepo, _storage)
 	listUsecase := lu.NewListUsecase(listRepo, boardRepo)
+	cardUsecase := cu.NewCardUsecase(listRepo, cardRepo)
 
 	tokenController := controllers.NewTokenController(tokenUsecase)
 	userController := controllers.NewUserController(userUsecase)
 	boardController := controllers.NewBoardController(boardUsecase)
 	listController := controllers.NewListController(listUsecase)
+	cardController := controllers.NewCardController(cardUsecase)
 
 	router.GET("_health", health)
 
@@ -53,4 +58,6 @@ func initializeRoutes() {
 
 	router.POST("boards/:board_id/lists", listController.Create)
 	router.PATCH("boards/:board_id/lists/:list_id", listController.Update)
+
+	router.POST("boards/:board_id/lists/:list_id/cards", cardController.Create)
 }
