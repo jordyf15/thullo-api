@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jordyf15/thullo-api/list"
@@ -58,7 +59,7 @@ func (controller *listController) Update(c *gin.Context) {
 
 	title, isExist := c.GetPostForm("title")
 	if isExist {
-		err := controller.usecase.UpdateTitle(listID, title)
+		err := controller.usecase.UpdateTitle(listID, strings.TrimSpace(title))
 		if err != nil {
 			respondBasedOnError(c, err)
 			return

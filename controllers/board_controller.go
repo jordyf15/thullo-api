@@ -26,7 +26,7 @@ func NewBoardController(usecase board.Usecase) BoardController {
 func (controller *boardController) Create(c *gin.Context) {
 	userID := c.MustGet("current_user_id").(primitive.ObjectID)
 	coverString := c.PostForm("cover")
-	title := c.PostForm("title")
+	title := strings.TrimSpace(c.PostForm("title"))
 	visibility := c.PostForm("visibility")
 
 	boardCover := map[string]interface{}{}
