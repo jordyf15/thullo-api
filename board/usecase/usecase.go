@@ -6,22 +6,26 @@ import (
 	"sync"
 
 	"github.com/jordyf15/thullo-api/board"
+	"github.com/jordyf15/thullo-api/board_member"
 	"github.com/jordyf15/thullo-api/custom_errors"
 	"github.com/jordyf15/thullo-api/models"
 	"github.com/jordyf15/thullo-api/storage"
 	"github.com/jordyf15/thullo-api/unsplash"
+	"github.com/jordyf15/thullo-api/user"
 	"github.com/jordyf15/thullo-api/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type boardUsecase struct {
-	boardRepo    board.Repository
-	unsplashRepo unsplash.Repository
-	storage      storage.Storage
+	boardRepo       board.Repository
+	unsplashRepo    unsplash.Repository
+	boardMemberRepo board_member.Repository
+	userRepo        user.Repository
+	storage         storage.Storage
 }
 
-func NewBoardUsecase(boardRepo board.Repository, unsplashRepo unsplash.Repository, storage storage.Storage) board.Usecase {
-	return &boardUsecase{boardRepo: boardRepo, unsplashRepo: unsplashRepo, storage: storage}
+func NewBoardUsecase(boardRepo board.Repository, unsplashRepo unsplash.Repository, boardMemberRepo board_member.Repository, userRepo user.Repository, storage storage.Storage) board.Usecase {
+	return &boardUsecase{boardRepo: boardRepo, unsplashRepo: unsplashRepo, boardMemberRepo: boardMemberRepo, userRepo: userRepo, storage: storage}
 }
 
 func (usecase *boardUsecase) Create(userID primitive.ObjectID, title string, visibility string, cover map[string]interface{}) error {
@@ -119,6 +123,71 @@ func (usecase *boardUsecase) Create(userID primitive.ObjectID, title string, vis
 	_board.EmptyImageURLs()
 
 	err = usecase.boardRepo.Create(_board)
+	if err != nil {
+		return err
+	}
+
+	boardMember := &models.BoardMember{
+		UserID:  userID,
+		BoardID: _board.ID,
+		Role:    models.MemberRoleAdmin,
+	}
+
+	err = usecase.boardMemberRepo.Create(boardMember)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (usecase *boardUsecase) AddMember(requesterID, boardID, memberID primitive.ObjectID) error {
+	board, err := usecase.boardRepo.GetBoardByID(boardID)
+	if err != nil {
+		return err
+	}
+
+	_, err = usecase.userRepo.GetByID(memberID)
+	if err != nil {
+		return err
+	}
+
+	boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(board.ID)
+	if err != nil {
+		return err
+	}
+
+	// check whether requester and new member is already a board member
+	isRequesterBoardMember := false
+	isNewMemberBoardMember := false
+	for _, boardMember := range boardMembers {
+		if boardMember.UserID == requesterID {
+			isRequesterBoardMember = true
+		}
+		if boardMember.UserID == memberID {
+			isNewMemberBoardMember = true
+		}
+		if isNewMemberBoardMember && isRequesterBoardMember {
+			break
+		}
+	}
+
+	// if requester is not a board member that means he/she is not authorized to add member
+	if !isRequesterBoardMember {
+		return custom_errors.ErrNotAuthorized
+	}
+	// if the new member is already a board member than the operation should not proceed
+	if isNewMemberBoardMember {
+		return custom_errors.ErrUserIsAlreadyBoardMember
+	}
+
+	boardMember := &models.BoardMember{
+		UserID:  memberID,
+		BoardID: board.ID,
+		Role:    models.MemberRoleMember,
+	}
+
+	err = usecase.boardMemberRepo.Create(boardMember)
 	if err != nil {
 		return err
 	}

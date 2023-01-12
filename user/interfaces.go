@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/jordyf15/thullo-api/models"
 	"github.com/jordyf15/thullo-api/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -13,6 +14,7 @@ type Repository interface {
 	Create(user *models.User) error
 	FieldExists(key string, value string) (bool, error)
 	GetByEmail(email string) (*models.User, error)
+	GetByID(userID primitive.ObjectID) (*models.User, error)
 }
 
 type Usecase interface {

@@ -66,3 +66,17 @@ func (repo *userRepository) GetByEmail(email string) (*models.User, error) {
 	return foundUser, err
 
 }
+
+func (repo *userRepository) GetByID(userID primitive.ObjectID) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+
+	filter := bson.D{
+		{Key: "_id", Value: userID},
+	}
+
+	foundUser := &models.User{}
+	err := repo.db.FindOne(ctx, filter).Decode(foundUser)
+
+	return foundUser, err
+}

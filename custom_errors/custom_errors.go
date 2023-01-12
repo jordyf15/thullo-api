@@ -42,9 +42,10 @@ var (
 	ErrUnsplashFocalPointYTooLow  = newErr(405, "Unsplash focal point Y is too low")
 
 	// Board errors
-	ErrBoardTitleEmpty        = newErr(501, "Board title is empty")
-	ErrBoardCoverEmpty        = newErr(502, "Board cover is empty")
-	ErrBoardInvalidVisibility = newErr(503, "Board visibility is invalid")
+	ErrBoardTitleEmpty          = newErr(501, "Board title is empty")
+	ErrBoardCoverEmpty          = newErr(502, "Board cover is empty")
+	ErrBoardInvalidVisibility   = newErr(503, "Board visibility is invalid")
+	ErrUserIsAlreadyBoardMember = newErr(504, "User is already a board member")
 
 	// list errors
 	ErrListTitleEmpty = newErr(601, "List title is empty")

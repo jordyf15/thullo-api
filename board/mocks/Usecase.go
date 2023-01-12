@@ -12,6 +12,20 @@ type Usecase struct {
 	mock.Mock
 }
 
+// AddMember provides a mock function with given fields: requesterID, boardID, memberID
+func (_m *Usecase) AddMember(requesterID primitive.ObjectID, boardID primitive.ObjectID, memberID primitive.ObjectID) error {
+	ret := _m.Called(requesterID, boardID, memberID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID) error); ok {
+		r0 = rf(requesterID, boardID, memberID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Create provides a mock function with given fields: userID, title, visibility, boardCover
 func (_m *Usecase) Create(userID primitive.ObjectID, title string, visibility string, boardCover map[string]interface{}) error {
 	ret := _m.Called(userID, title, visibility, boardCover)

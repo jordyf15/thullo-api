@@ -13,6 +13,7 @@ import (
 
 type BoardController interface {
 	Create(c *gin.Context)
+	AddMember(c *gin.Context)
 }
 
 type boardController struct {
@@ -51,6 +52,32 @@ func (controller *boardController) Create(c *gin.Context) {
 	}
 
 	err = controller.usecase.Create(userID, title, visibility, boardCover)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (controller *boardController) AddMember(c *gin.Context) {
+	requesterID := c.MustGet("current_user_id").(primitive.ObjectID)
+	boardIDStr := c.Param("board_id")
+	memberIDStr := c.PostForm("member_id")
+
+	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	memberID, err := primitive.ObjectIDFromHex(memberIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	err = controller.usecase.AddMember(requesterID, boardID, memberID)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return

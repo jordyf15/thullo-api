@@ -8,9 +8,12 @@ import (
 	"github.com/jordyf15/thullo-api/board"
 	br "github.com/jordyf15/thullo-api/board/mocks"
 	"github.com/jordyf15/thullo-api/board/usecase"
+	bmr "github.com/jordyf15/thullo-api/board_member/mocks"
 	"github.com/jordyf15/thullo-api/custom_errors"
+	"github.com/jordyf15/thullo-api/models"
 	sr "github.com/jordyf15/thullo-api/storage/mocks"
 	unr "github.com/jordyf15/thullo-api/unsplash/mocks"
+	ur "github.com/jordyf15/thullo-api/user/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -22,9 +25,30 @@ func TestBoardUsecase(t *testing.T) {
 }
 
 var (
-	img1 *os.File
-	img2 *os.File
-	img3 *os.File
+	img1         *os.File
+	img2         *os.File
+	img3         *os.File
+	requesterID1 = primitive.NewObjectID()
+	requesterID2 = primitive.NewObjectID()
+	newMemberID1 = primitive.NewObjectID()
+	newMemberID2 = primitive.NewObjectID()
+
+	board1 = &models.Board{
+		ID: primitive.NewObjectID(),
+	}
+	boardMember1 = &models.BoardMember{
+		ID:      primitive.NewObjectID(),
+		UserID:  requesterID1,
+		BoardID: board1.ID,
+	}
+	boardMember2 = &models.BoardMember{
+		ID:      primitive.NewObjectID(),
+		UserID:  newMemberID1,
+		BoardID: board1.ID,
+	}
+	user1 = &models.User{
+		ID: newMemberID1,
+	}
 )
 
 type boardUsecaseSuite struct {
@@ -32,14 +56,18 @@ type boardUsecaseSuite struct {
 
 	usecase board.Usecase
 
-	boardRepo    *br.Repository
-	unsplashRepo *unr.Repository
-	storage      *sr.Storage
+	boardRepo       *br.Repository
+	unsplashRepo    *unr.Repository
+	boardMemberRepo *bmr.Repository
+	userRepo        *ur.Repository
+	storage         *sr.Storage
 }
 
 func (s *boardUsecaseSuite) SetupTest() {
 	s.boardRepo = new(br.Repository)
 	s.unsplashRepo = new(unr.Repository)
+	s.userRepo = new(ur.Repository)
+	s.boardMemberRepo = new(bmr.Repository)
 	s.storage = new(sr.Storage)
 
 	img1, _ = os.Create("image1.jpg")
@@ -54,8 +82,12 @@ func (s *boardUsecaseSuite) SetupTest() {
 		arg2.Done()
 	})
 	s.boardRepo.On("Create", mock.AnythingOfType("*models.Board")).Return(nil)
+	s.boardRepo.On("GetBoardByID", mock.AnythingOfType("primitive.ObjectID")).Return(board1, nil)
+	s.userRepo.On("GetByID", mock.AnythingOfType("primitive.ObjectID")).Return(user1, nil)
+	s.boardMemberRepo.On("Create", mock.AnythingOfType("*models.BoardMember")).Return(nil)
+	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return([]*models.BoardMember{boardMember1, boardMember2}, nil)
 
-	s.usecase = usecase.NewBoardUsecase(s.boardRepo, s.unsplashRepo, s.storage)
+	s.usecase = usecase.NewBoardUsecase(s.boardRepo, s.unsplashRepo, s.boardMemberRepo, s.userRepo, s.storage)
 }
 
 func (s *boardUsecaseSuite) AfterTest(suiteName, testName string) {
@@ -90,4 +122,24 @@ func (s *boardUsecaseSuite) TestCreateSuccessful() {
 
 	assert.NoError(s.T(), err)
 	s.boardRepo.AssertNumberOfCalls(s.T(), "Create", 1)
+}
+
+func (s *boardUsecaseSuite) TestAddMemberNotAuthorized() {
+	err := s.usecase.AddMember(requesterID2, board1.ID, newMemberID2)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+}
+
+func (s *boardUsecaseSuite) TestAddedMemberIsAlreadyMember() {
+	err := s.usecase.AddMember(requesterID1, board1.ID, newMemberID1)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrUserIsAlreadyBoardMember.Error(), err.Error())
+}
+
+func (s *boardUsecaseSuite) TestAddMemberSuccessful() {
+	err := s.usecase.AddMember(requesterID1, board1.ID, newMemberID2)
+
+	assert.NoError(s.T(), err)
 }

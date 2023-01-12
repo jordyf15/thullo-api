@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -35,6 +36,7 @@ func (s *boardControllerSuite) SetupTest() {
 	usecaseMock := new(mocks.Usecase)
 
 	usecaseMock.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil)
+	usecaseMock.On("AddMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 
 	s.controller = controllers.NewBoardController(usecaseMock)
 	s.response = httptest.NewRecorder()
@@ -44,6 +46,10 @@ func (s *boardControllerSuite) SetupTest() {
 		c.Set("current_user_id", primitive.NewObjectID())
 		c.Next()
 	}, s.controller.Create)
+	s.router.POST("/boards/:board_id/members", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.AddMember)
 }
 
 func (s *boardControllerSuite) TestCreateEmptyCover() {
@@ -123,6 +129,20 @@ func (s *boardControllerSuite) TestCreate() {
 	writer.Close()
 
 	s.context.Request, _ = http.NewRequest("POST", "/boards", buf)
+	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	s.router.ServeHTTP(s.response, s.context.Request)
+
+	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+}
+
+func (s *boardControllerSuite) TestAddMember() {
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+	memberID, _ := writer.CreateFormField("member_id")
+	memberID.Write([]byte(primitive.NewObjectID().Hex()))
+	writer.Close()
+
+	s.context.Request, _ = http.NewRequest("POST", fmt.Sprintf("/boards/%s/members", primitive.NewObjectID().Hex()), buf)
 	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
 	s.router.ServeHTTP(s.response, s.context.Request)
 

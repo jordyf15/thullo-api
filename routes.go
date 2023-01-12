@@ -8,6 +8,7 @@ import (
 	tr "github.com/jordyf15/thullo-api/token/repository"
 	tu "github.com/jordyf15/thullo-api/token/usecase"
 
+	bmr "github.com/jordyf15/thullo-api/board_member/repository"
 	cr "github.com/jordyf15/thullo-api/card/repository"
 	ur "github.com/jordyf15/thullo-api/user/repository"
 
@@ -32,10 +33,11 @@ func initializeRoutes() {
 	unsplashRepo := unr.NewUnsplashRepository(&http.Client{})
 	listRepo := lr.NewListRepository(rtdbClient)
 	cardRepo := cr.NewCardRepository(rtdbClient)
+	boardMemberRepo := bmr.NewBoardMemberRepository(rtdbClient)
 
 	tokenUsecase := tu.NewTokenUsecase(tokenRepo)
 	userUsecase := uu.NewUserUsecase(userRepo, tokenRepo, oauthRepo, _storage)
-	boardUsecase := bu.NewBoardUsecase(boardRepo, unsplashRepo, _storage)
+	boardUsecase := bu.NewBoardUsecase(boardRepo, unsplashRepo, boardMemberRepo, userRepo, _storage)
 	listUsecase := lu.NewListUsecase(listRepo, boardRepo)
 	cardUsecase := cu.NewCardUsecase(listRepo, cardRepo)
 
@@ -55,6 +57,7 @@ func initializeRoutes() {
 	router.POST("login/google", userController.LoginWithGoogle)
 
 	router.POST("boards", boardController.Create)
+	router.POST("boards/:board_id/members", boardController.AddMember)
 
 	router.POST("boards/:board_id/lists", listController.Create)
 	router.PATCH("boards/:board_id/lists/:list_id", listController.Update)

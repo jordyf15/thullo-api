@@ -102,3 +102,14 @@ func (s *userRepositorySuite) TestGetByEmail() {
 	assert.Equal(s.T(), user1.Name, user.Name)
 	assert.Equal(s.T(), user1.Bio, user.Bio)
 }
+
+func (s *userRepositorySuite) TestGetByID() {
+	user, err := s.repository.GetByID(userID1)
+
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), user1.ID, user.ID)
+	assert.Equal(s.T(), user1.Email, user.Email)
+	assert.Equal(s.T(), user1.Username, user.Username)
+	assert.Equal(s.T(), user1.Name, user.Name)
+	assert.Equal(s.T(), user1.Bio, user.Bio)
+}
