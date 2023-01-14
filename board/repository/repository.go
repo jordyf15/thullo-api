@@ -48,3 +48,12 @@ func (repo *boardRepository) GetBoardByID(boardID primitive.ObjectID) (*models.B
 
 	return board, nil
 }
+
+func (repo *boardRepository) Update(board *models.Board) error {
+	board.UpdatedAt = time.Now()
+
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("boards/%s", board.ID.Hex()))
+
+	return ref.Set(ctx, board)
+}

@@ -57,6 +57,8 @@ func initializeRoutes() {
 	router.POST("login/google", userController.LoginWithGoogle)
 
 	router.POST("boards", boardController.Create)
+	router.PATCH("boards/:board_id", boardController.Update)
+
 	router.POST("boards/:board_id/members", boardController.AddMember)
 	router.PATCH("boards/:board_id/members/:member_id", boardController.UpdateMemberRole)
 	router.DELETE("boards/:board_id/members/:member_id", boardController.DeleteMember)

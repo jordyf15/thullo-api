@@ -93,6 +93,7 @@ func (s *boardUsecaseSuite) SetupTest() {
 	})
 	s.boardRepo.On("Create", mock.AnythingOfType("*models.Board")).Return(nil)
 	s.boardRepo.On("GetBoardByID", mock.AnythingOfType("primitive.ObjectID")).Return(board1, nil)
+	s.boardRepo.On("Update", mock.AnythingOfType("*models.Board")).Return(nil)
 	s.userRepo.On("GetByID", mock.AnythingOfType("primitive.ObjectID")).Return(user1, nil)
 	s.boardMemberRepo.On("Create", mock.AnythingOfType("*models.BoardMember")).Return(nil)
 	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return(getBoardMembers, nil)
@@ -134,6 +135,83 @@ func (s *boardUsecaseSuite) TestCreateSuccessful() {
 
 	assert.NoError(s.T(), err)
 	s.boardRepo.AssertNumberOfCalls(s.T(), "Create", 1)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardVisibilityInvalidVisibility() {
+	err := s.usecase.UpdateVisibility(primitive.NewObjectID(), primitive.NewObjectID(), "visible")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrBoardInvalidVisibility.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardVisibilityAsNonMember() {
+	err := s.usecase.UpdateVisibility(primitive.NewObjectID(), board1.ID, "public")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardVisibilityAsMember() {
+	err := s.usecase.UpdateVisibility(boardMember2.UserID, board1.ID, "public")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardVisibilitySuccessful() {
+	err := s.usecase.UpdateVisibility(boardMember1.UserID, board1.ID, "public")
+
+	assert.NoError(s.T(), err)
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 1)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardTitleEmptyTitle() {
+	err := s.usecase.UpdateTitle(primitive.NewObjectID(), primitive.NewObjectID(), "")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrBoardTitleEmpty.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardTitleAsNonMember() {
+	err := s.usecase.UpdateTitle(primitive.NewObjectID(), board1.ID, "updated title")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardTitleAsMember() {
+	err := s.usecase.UpdateTitle(boardMember2.UserID, board1.ID, "updated title")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardTitleSuccessful() {
+	err := s.usecase.UpdateTitle(boardMember1.UserID, board1.ID, "updated title")
+
+	assert.NoError(s.T(), err)
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 1)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardDescriptionAsNonMember() {
+	err := s.usecase.UpdateDescription(primitive.NewObjectID(), board1.ID, "updated description")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateBoardDescriptionSuccessful() {
+	err := s.usecase.UpdateDescription(boardMember2.UserID, board1.ID, "updated description")
+
+	assert.NoError(s.T(), err)
+	s.boardRepo.AssertNumberOfCalls(s.T(), "Update", 1)
 }
 
 func (s *boardUsecaseSuite) TestAddMemberNotAuthorized() {

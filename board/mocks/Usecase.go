@@ -54,6 +54,20 @@ func (_m *Usecase) DeleteMember(requesterID primitive.ObjectID, boardID primitiv
 	return r0
 }
 
+// UpdateDescription provides a mock function with given fields: requesterID, boardID, description
+func (_m *Usecase) UpdateDescription(requesterID primitive.ObjectID, boardID primitive.ObjectID, description string) error {
+	ret := _m.Called(requesterID, boardID, description)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, description)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateMemberRole provides a mock function with given fields: requesterID, boardID, memberID, role
 func (_m *Usecase) UpdateMemberRole(requesterID primitive.ObjectID, boardID primitive.ObjectID, memberID primitive.ObjectID, role string) error {
 	ret := _m.Called(requesterID, boardID, memberID, role)
@@ -61,6 +75,34 @@ func (_m *Usecase) UpdateMemberRole(requesterID primitive.ObjectID, boardID prim
 	var r0 error
 	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, string) error); ok {
 		r0 = rf(requesterID, boardID, memberID, role)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateTitle provides a mock function with given fields: requesterID, boardID, title
+func (_m *Usecase) UpdateTitle(requesterID primitive.ObjectID, boardID primitive.ObjectID, title string) error {
+	ret := _m.Called(requesterID, boardID, title)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, title)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateVisibility provides a mock function with given fields: requesterID, boardID, visibility
+func (_m *Usecase) UpdateVisibility(requesterID primitive.ObjectID, boardID primitive.ObjectID, visibility string) error {
+	ret := _m.Called(requesterID, boardID, visibility)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, visibility)
 	} else {
 		r0 = ret.Error(0)
 	}

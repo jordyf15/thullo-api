@@ -141,6 +141,113 @@ func (usecase *boardUsecase) Create(userID primitive.ObjectID, title string, vis
 	return nil
 }
 
+func (usecase *boardUsecase) UpdateVisibility(requesterID, boardID primitive.ObjectID, visibility string) error {
+	if visibility != models.BoardVisibilityPrivate && visibility != models.BoardVisibilityPublic {
+		return custom_errors.ErrBoardInvalidVisibility
+	}
+
+	board, err := usecase.boardRepo.GetBoardByID(boardID)
+	if err != nil {
+		return err
+	}
+
+	boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(boardID)
+	if err != nil {
+		return err
+	}
+
+	var requesterBoardMember *models.BoardMember
+	for _, boardMember := range boardMembers {
+		if boardMember.UserID == requesterID {
+			requesterBoardMember = boardMember
+			break
+		}
+	}
+
+	if requesterBoardMember == nil || requesterBoardMember.Role == models.MemberRoleMember {
+		return custom_errors.ErrNotAuthorized
+	}
+
+	board.Visibility = models.BoardVisibility(visibility)
+
+	err = usecase.boardRepo.Update(board)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (usecase *boardUsecase) UpdateTitle(requesterID, boardID primitive.ObjectID, title string) error {
+	if title == "" {
+		return custom_errors.ErrBoardTitleEmpty
+	}
+
+	board, err := usecase.boardRepo.GetBoardByID(boardID)
+	if err != nil {
+		return err
+	}
+
+	boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(boardID)
+	if err != nil {
+		return err
+	}
+
+	var requesterBoardMember *models.BoardMember
+	for _, boardMember := range boardMembers {
+		if boardMember.UserID == requesterID {
+			requesterBoardMember = boardMember
+			break
+		}
+	}
+
+	if requesterBoardMember == nil || requesterBoardMember.Role == models.MemberRoleMember {
+		return custom_errors.ErrNotAuthorized
+	}
+
+	board.Title = title
+
+	err = usecase.boardRepo.Update(board)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (usecase *boardUsecase) UpdateDescription(requesterID, boardID primitive.ObjectID, description string) error {
+	board, err := usecase.boardRepo.GetBoardByID(boardID)
+	if err != nil {
+		return err
+	}
+
+	boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(boardID)
+	if err != nil {
+		return err
+	}
+
+	var requesterBoardMember *models.BoardMember
+	for _, boardMember := range boardMembers {
+		if boardMember.UserID == requesterID {
+			requesterBoardMember = boardMember
+			break
+		}
+	}
+
+	if requesterBoardMember == nil {
+		return custom_errors.ErrNotAuthorized
+	}
+
+	board.Description = description
+
+	err = usecase.boardRepo.Update(board)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (usecase *boardUsecase) AddMember(requesterID, boardID, memberID primitive.ObjectID) error {
 	board, err := usecase.boardRepo.GetBoardByID(boardID)
 	if err != nil {

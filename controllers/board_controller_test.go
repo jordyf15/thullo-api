@@ -30,17 +30,21 @@ type boardControllerSuite struct {
 	controller controllers.BoardController
 	response   *httptest.ResponseRecorder
 	context    *gin.Context
+	usecase    *mocks.Usecase
 }
 
 func (s *boardControllerSuite) SetupTest() {
-	usecaseMock := new(mocks.Usecase)
+	s.usecase = new(mocks.Usecase)
 
-	usecaseMock.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil)
-	usecaseMock.On("AddMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
-	usecaseMock.On("UpdateMemberRole", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
-	usecaseMock.On("DeleteMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
+	s.usecase.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil)
+	s.usecase.On("AddMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
+	s.usecase.On("UpdateMemberRole", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	s.usecase.On("DeleteMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
+	s.usecase.On("UpdateVisibility", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	s.usecase.On("UpdateTitle", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	s.usecase.On("UpdateDescription", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
 
-	s.controller = controllers.NewBoardController(usecaseMock)
+	s.controller = controllers.NewBoardController(s.usecase)
 	s.response = httptest.NewRecorder()
 	s.context, s.router = gin.CreateTestContext(s.response)
 
@@ -48,6 +52,10 @@ func (s *boardControllerSuite) SetupTest() {
 		c.Set("current_user_id", primitive.NewObjectID())
 		c.Next()
 	}, s.controller.Create)
+	s.router.PATCH("/boards/:board_id", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.Update)
 	s.router.POST("/boards/:board_id/members", func(c *gin.Context) {
 		c.Set("current_user_id", primitive.NewObjectID())
 		c.Next()
@@ -143,6 +151,57 @@ func (s *boardControllerSuite) TestCreate() {
 	s.router.ServeHTTP(s.response, s.context.Request)
 
 	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+}
+
+func (s *boardControllerSuite) TestUpdateBoardVisibility() {
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+	visibility, _ := writer.CreateFormField("visibility")
+	visibility.Write([]byte("public"))
+	writer.Close()
+
+	s.context.Request, _ = http.NewRequest("PATCH", fmt.Sprintf("/boards/%s", primitive.NewObjectID().Hex()), buf)
+	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	s.router.ServeHTTP(s.response, s.context.Request)
+
+	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateVisibility", 1)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateTitle", 0)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateDescription", 0)
+}
+
+func (s *boardControllerSuite) TestUpdateBoardTitle() {
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+	title, _ := writer.CreateFormField("title")
+	title.Write([]byte("board 1"))
+	writer.Close()
+
+	s.context.Request, _ = http.NewRequest("PATCH", fmt.Sprintf("/boards/%s", primitive.NewObjectID().Hex()), buf)
+	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	s.router.ServeHTTP(s.response, s.context.Request)
+
+	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateVisibility", 0)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateTitle", 1)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateDescription", 0)
+}
+
+func (s *boardControllerSuite) TestUpdateBoardDescription() {
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+	description, _ := writer.CreateFormField("description")
+	description.Write([]byte("this is board 1"))
+	writer.Close()
+
+	s.context.Request, _ = http.NewRequest("PATCH", fmt.Sprintf("/boards/%s", primitive.NewObjectID().Hex()), buf)
+	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	s.router.ServeHTTP(s.response, s.context.Request)
+
+	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateVisibility", 0)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateTitle", 0)
+	s.usecase.AssertNumberOfCalls(s.T(), "UpdateDescription", 1)
 }
 
 func (s *boardControllerSuite) TestAddMember() {

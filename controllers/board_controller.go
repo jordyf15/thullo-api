@@ -13,6 +13,7 @@ import (
 
 type BoardController interface {
 	Create(c *gin.Context)
+	Update(c *gin.Context)
 	AddMember(c *gin.Context)
 	UpdateMemberRole(c *gin.Context)
 	DeleteMember(c *gin.Context)
@@ -57,6 +58,46 @@ func (controller *boardController) Create(c *gin.Context) {
 	if err != nil {
 		respondBasedOnError(c, err)
 		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (controller *boardController) Update(c *gin.Context) {
+	requesterID := c.MustGet("current_user_id").(primitive.ObjectID)
+	boardIDStr := c.Param("board_id")
+
+	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	visibility, isExist := c.GetPostForm("visibility")
+	if isExist {
+		err := controller.usecase.UpdateVisibility(requesterID, boardID, visibility)
+		if err != nil {
+			respondBasedOnError(c, err)
+			return
+		}
+	}
+
+	title, isExist := c.GetPostForm("title")
+	if isExist {
+		err := controller.usecase.UpdateTitle(requesterID, boardID, strings.TrimSpace(title))
+		if err != nil {
+			respondBasedOnError(c, err)
+			return
+		}
+	}
+
+	description, isExist := c.GetPostForm("description")
+	if isExist {
+		err := controller.usecase.UpdateDescription(requesterID, boardID, description)
+		if err != nil {
+			respondBasedOnError(c, err)
+			return
+		}
 	}
 
 	c.Status(http.StatusNoContent)
