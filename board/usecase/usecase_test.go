@@ -97,6 +97,7 @@ func (s *boardUsecaseSuite) SetupTest() {
 	s.boardMemberRepo.On("Create", mock.AnythingOfType("*models.BoardMember")).Return(nil)
 	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return(getBoardMembers, nil)
 	s.boardMemberRepo.On("UpdateBoardMemberRole", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("models.MemberRole")).Return(nil)
+	s.boardMemberRepo.On("DeleteBoardMemberByID", mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 
 	s.usecase = usecase.NewBoardUsecase(s.boardRepo, s.unsplashRepo, s.boardMemberRepo, s.userRepo, s.storage)
 }
@@ -211,4 +212,43 @@ func (s *boardUsecaseSuite) TestUpdateMemberRoleSuccessful() {
 
 	assert.NoError(s.T(), err)
 	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 1)
+}
+
+func (s *boardUsecaseSuite) TestDeleteMemberNoMembers() {
+	err := s.usecase.DeleteMember(primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID())
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "DeleteBoardMemberByID", 0)
+}
+
+func (s *boardUsecaseSuite) TestDeleteMemberAsNonMember() {
+	err := s.usecase.DeleteMember(primitive.NewObjectID(), board1.ID, primitive.NewObjectID())
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "DeleteBoardMemberByID", 0)
+}
+
+func (s *boardUsecaseSuite) TestDeleteMemberAsMember() {
+	err := s.usecase.DeleteMember(boardMember2.UserID, board1.ID, primitive.NewObjectID())
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "DeleteBoardMemberByID", 0)
+}
+
+func (s *boardUsecaseSuite) TestDeleteMemberLastAdmin() {
+	err := s.usecase.DeleteMember(boardMember1.UserID, board1.ID, boardMember1.UserID)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrBoardMustHaveAnAdmin.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "DeleteBoardMemberByID", 0)
+}
+
+func (s *boardUsecaseSuite) TestDeleteMemberSuccessful() {
+	err := s.usecase.DeleteMember(boardMember1.UserID, board1.ID, boardMember2.UserID)
+
+	assert.NoError(s.T(), err)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "DeleteBoardMemberByID", 1)
 }

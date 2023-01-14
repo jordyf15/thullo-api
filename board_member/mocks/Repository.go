@@ -28,6 +28,20 @@ func (_m *Repository) Create(boardMember *models.BoardMember) error {
 	return r0
 }
 
+// DeleteBoardMemberByID provides a mock function with given fields: ID
+func (_m *Repository) DeleteBoardMemberByID(ID primitive.ObjectID) error {
+	ret := _m.Called(ID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID) error); ok {
+		r0 = rf(ID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetBoardMembers provides a mock function with given fields: boardID
 func (_m *Repository) GetBoardMembers(boardID primitive.ObjectID) ([]*models.BoardMember, error) {
 	ret := _m.Called(boardID)

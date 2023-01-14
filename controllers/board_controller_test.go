@@ -38,6 +38,7 @@ func (s *boardControllerSuite) SetupTest() {
 	usecaseMock.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil)
 	usecaseMock.On("AddMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 	usecaseMock.On("UpdateMemberRole", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	usecaseMock.On("DeleteMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 
 	s.controller = controllers.NewBoardController(usecaseMock)
 	s.response = httptest.NewRecorder()
@@ -55,6 +56,10 @@ func (s *boardControllerSuite) SetupTest() {
 		c.Set("current_user_id", primitive.NewObjectID())
 		c.Next()
 	}, s.controller.UpdateMemberRole)
+	s.router.DELETE("/boards/:board_id/members/:member_id", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.DeleteMember)
 }
 
 func (s *boardControllerSuite) TestCreateEmptyCover() {
@@ -153,7 +158,6 @@ func (s *boardControllerSuite) TestAddMember() {
 
 	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
 }
-
 func (s *boardControllerSuite) TestUpdateMemberRole() {
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
@@ -166,4 +170,10 @@ func (s *boardControllerSuite) TestUpdateMemberRole() {
 	s.router.ServeHTTP(s.response, s.context.Request)
 
 	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+}
+
+func (s *boardControllerSuite) TestDeleteMember() {
+	s.context.Request, _ = http.NewRequest("DELETE", fmt.Sprintf("/boards/%s/members/%s", primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex()), nil)
+
+	s.router.ServeHTTP(s.response, s.context.Request)
 }

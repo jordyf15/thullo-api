@@ -53,3 +53,10 @@ func (repo *boardMemberRepository) UpdateBoardMemberRole(ID primitive.ObjectID, 
 
 	return ref.Set(ctx, role)
 }
+
+func (repo *boardMemberRepository) DeleteBoardMemberByID(ID primitive.ObjectID) error {
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("board_members/%s", ID.Hex()))
+
+	return ref.Delete(ctx)
+}
