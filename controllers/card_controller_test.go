@@ -34,13 +34,16 @@ type cardControllerSuite struct {
 func (s *cardControllerSuite) SetupTest() {
 	s.usecase = new(mocks.Usecase)
 
-	s.usecase.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	s.usecase.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
 
 	s.controller = controllers.NewCardController(s.usecase)
 	s.response = httptest.NewRecorder()
 	s.context, s.router = gin.CreateTestContext(s.response)
 
-	s.router.POST("/boards/:board_id/lists/:list_id/cards", s.controller.Create)
+	s.router.POST("/boards/:board_id/lists/:list_id/cards", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.Create)
 }
 
 func (s *cardControllerSuite) TestCreate() {

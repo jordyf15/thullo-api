@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/jordyf15/thullo-api/board"
+	"github.com/jordyf15/thullo-api/board_member"
 	"github.com/jordyf15/thullo-api/custom_errors"
 	"github.com/jordyf15/thullo-api/list"
 	"github.com/jordyf15/thullo-api/models"
@@ -11,25 +12,26 @@ import (
 )
 
 type listUsecase struct {
-	listRepo  list.Repository
-	boardRepo board.Repository
+	listRepo        list.Repository
+	boardRepo       board.Repository
+	boardMemberRepo board_member.Repository
 }
 
-func NewListUsecase(listRepo list.Repository, boardRepo board.Repository) list.Usecase {
-	return &listUsecase{listRepo: listRepo, boardRepo: boardRepo}
+func NewListUsecase(listRepo list.Repository, boardRepo board.Repository, boardMemberRepo board_member.Repository) list.Usecase {
+	return &listUsecase{listRepo: listRepo, boardRepo: boardRepo, boardMemberRepo: boardMemberRepo}
 }
 
-func (usecase *listUsecase) Create(boardID primitive.ObjectID, title string) error {
+func (usecase *listUsecase) Create(requesterID, boardID primitive.ObjectID, title string) error {
 	if title == "" {
 		return custom_errors.ErrListTitleEmpty
 	}
 
-	board, err := usecase.boardRepo.GetBoardByID(boardID)
+	err := usecase.checkIfRequesterIsMemberOfBoard(requesterID, boardID)
 	if err != nil {
 		return err
 	}
 
-	lists, err := usecase.listRepo.GetBoardLists(board.ID)
+	lists, err := usecase.listRepo.GetBoardLists(boardID)
 	if err != nil {
 		return err
 	}
@@ -48,9 +50,14 @@ func (usecase *listUsecase) Create(boardID primitive.ObjectID, title string) err
 	return nil
 }
 
-func (usecase *listUsecase) UpdateTitle(listID primitive.ObjectID, title string) error {
+func (usecase *listUsecase) UpdateTitle(requesterID, boardID, listID primitive.ObjectID, title string) error {
 	if title == "" {
 		return custom_errors.ErrListTitleEmpty
+	}
+
+	err := usecase.checkIfRequesterIsMemberOfBoard(requesterID, boardID)
+	if err != nil {
+		return err
 	}
 
 	list, err := usecase.listRepo.GetListByID(listID)
@@ -69,7 +76,12 @@ func (usecase *listUsecase) UpdateTitle(listID primitive.ObjectID, title string)
 	return nil
 }
 
-func (usecase *listUsecase) UpdatePosition(boardID, listID primitive.ObjectID, newPosition int) error {
+func (usecase *listUsecase) UpdatePosition(requesterID, boardID, listID primitive.ObjectID, newPosition int) error {
+	err := usecase.checkIfRequesterIsMemberOfBoard(requesterID, boardID)
+	if err != nil {
+		return err
+	}
+
 	updatedList, err := usecase.listRepo.GetListByID(listID)
 	if err != nil {
 		return err
@@ -79,6 +91,14 @@ func (usecase *listUsecase) UpdatePosition(boardID, listID primitive.ObjectID, n
 	lists, err := usecase.listRepo.GetBoardLists(boardID)
 	if err != nil {
 		return err
+	}
+
+	if newPosition < 0 {
+		return custom_errors.ErrListPositionTooLow
+	}
+
+	if newPosition >= len(lists) {
+		return custom_errors.ErrListPositionTooHigh
 	}
 
 	for _, list := range lists {
@@ -99,6 +119,33 @@ func (usecase *listUsecase) UpdatePosition(boardID, listID primitive.ObjectID, n
 				}
 			}
 		}
+	}
+
+	return nil
+}
+
+func (usecase *listUsecase) checkIfRequesterIsMemberOfBoard(requesterID, boardID primitive.ObjectID) error {
+	boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(boardID)
+	if err != nil {
+		return err
+	}
+
+	// if there are no board members it means there are no board
+	// a board will always atleast have 1 member
+	if len(boardMembers) == 0 {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	var requesterBoardMember *models.BoardMember
+
+	for _, boardMember := range boardMembers {
+		if boardMember.UserID == requesterID {
+			requesterBoardMember = boardMember
+		}
+	}
+
+	if requesterBoardMember == nil {
+		return custom_errors.ErrNotAuthorized
 	}
 
 	return nil

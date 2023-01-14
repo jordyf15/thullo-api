@@ -34,16 +34,22 @@ type listControllerSuite struct {
 func (s *listControllerSuite) SetupTest() {
 	s.usecase = new(mocks.Usecase)
 
-	s.usecase.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
-	s.usecase.On("UpdateTitle", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
-	s.usecase.On("UpdatePosition", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("int")).Return(nil)
+	s.usecase.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	s.usecase.On("UpdateTitle", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	s.usecase.On("UpdatePosition", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("int")).Return(nil)
 
 	s.controller = controllers.NewListController(s.usecase)
 	s.response = httptest.NewRecorder()
 	s.context, s.router = gin.CreateTestContext(s.response)
 
-	s.router.POST("/boards/:board_id/lists", s.controller.Create)
-	s.router.PATCH("/boards/:board_id/lists/:list_id", s.controller.Update)
+	s.router.POST("/boards/:board_id/lists", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.Create)
+	s.router.PATCH("/boards/:board_id/lists/:list_id", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.Update)
 }
 
 func (s *listControllerSuite) TestCreate() {

@@ -22,7 +22,15 @@ func NewCardController(usecase card.Usecase) CardController {
 }
 
 func (controller *cardController) Create(c *gin.Context) {
+	userID := c.MustGet("current_user_id").(primitive.ObjectID)
+	boardIDStr := c.Param("board_id")
 	listIDStr := c.Param("list_id")
+
+	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
 
 	listID, err := primitive.ObjectIDFromHex(listIDStr)
 	if err != nil {
@@ -32,7 +40,7 @@ func (controller *cardController) Create(c *gin.Context) {
 
 	title := strings.TrimSpace(c.PostForm("title"))
 
-	err = controller.usecase.Create(listID, title)
+	err = controller.usecase.Create(userID, boardID, listID, title)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return

@@ -12,13 +12,13 @@ type Usecase struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: listID, title
-func (_m *Usecase) Create(listID primitive.ObjectID, title string) error {
-	ret := _m.Called(listID, title)
+// Create provides a mock function with given fields: requesterID, boardID, listID, title
+func (_m *Usecase) Create(requesterID primitive.ObjectID, boardID primitive.ObjectID, listID primitive.ObjectID, title string) error {
+	ret := _m.Called(requesterID, boardID, listID, title)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(primitive.ObjectID, string) error); ok {
-		r0 = rf(listID, title)
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, listID, title)
 	} else {
 		r0 = ret.Error(0)
 	}

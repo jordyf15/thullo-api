@@ -12,13 +12,13 @@ type Usecase struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: boardID, title
-func (_m *Usecase) Create(boardID primitive.ObjectID, title string) error {
-	ret := _m.Called(boardID, title)
+// Create provides a mock function with given fields: requesterID, boardID, title
+func (_m *Usecase) Create(requesterID primitive.ObjectID, boardID primitive.ObjectID, title string) error {
+	ret := _m.Called(requesterID, boardID, title)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(primitive.ObjectID, string) error); ok {
-		r0 = rf(boardID, title)
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, title)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -26,13 +26,13 @@ func (_m *Usecase) Create(boardID primitive.ObjectID, title string) error {
 	return r0
 }
 
-// UpdatePosition provides a mock function with given fields: boardID, listID, newPosition
-func (_m *Usecase) UpdatePosition(boardID primitive.ObjectID, listID primitive.ObjectID, newPosition int) error {
-	ret := _m.Called(boardID, listID, newPosition)
+// UpdatePosition provides a mock function with given fields: requesterID, boardID, listID, newPosition
+func (_m *Usecase) UpdatePosition(requesterID primitive.ObjectID, boardID primitive.ObjectID, listID primitive.ObjectID, newPosition int) error {
+	ret := _m.Called(requesterID, boardID, listID, newPosition)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, int) error); ok {
-		r0 = rf(boardID, listID, newPosition)
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, int) error); ok {
+		r0 = rf(requesterID, boardID, listID, newPosition)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -40,13 +40,13 @@ func (_m *Usecase) UpdatePosition(boardID primitive.ObjectID, listID primitive.O
 	return r0
 }
 
-// UpdateTitle provides a mock function with given fields: listID, title
-func (_m *Usecase) UpdateTitle(listID primitive.ObjectID, title string) error {
-	ret := _m.Called(listID, title)
+// UpdateTitle provides a mock function with given fields: requesterID, boardID, listID, title
+func (_m *Usecase) UpdateTitle(requesterID primitive.ObjectID, boardID primitive.ObjectID, listID primitive.ObjectID, title string) error {
+	ret := _m.Called(requesterID, boardID, listID, title)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(primitive.ObjectID, string) error); ok {
-		r0 = rf(listID, title)
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, listID, title)
 	} else {
 		r0 = ret.Error(0)
 	}

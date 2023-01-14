@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"testing"
 
+	bmr "github.com/jordyf15/thullo-api/board_member/mocks"
 	"github.com/jordyf15/thullo-api/card"
 	cr "github.com/jordyf15/thullo-api/card/mocks"
 	"github.com/jordyf15/thullo-api/card/usecase"
@@ -22,19 +23,36 @@ func TestCardUsecase(t *testing.T) {
 type cardUsecaseSuite struct {
 	suite.Suite
 
-	usecase  card.Usecase
-	listRepo *lr.Repository
-	cardRepo *cr.Repository
+	usecase         card.Usecase
+	listRepo        *lr.Repository
+	cardRepo        *cr.Repository
+	boardMemberRepo *bmr.Repository
 }
 
 var (
-	boardID = primitive.NewObjectID()
+	board1 = &models.Board{
+		ID: primitive.NewObjectID(),
+	}
+	board2 = &models.Board{
+		ID: primitive.NewObjectID(),
+	}
+
+	boardMember1 = &models.BoardMember{
+		ID:      primitive.NewObjectID(),
+		UserID:  primitive.NewObjectID(),
+		BoardID: board1.ID,
+	}
+	boardMember2 = &models.BoardMember{
+		ID:      primitive.NewObjectID(),
+		UserID:  primitive.NewObjectID(),
+		BoardID: board2.ID,
+	}
 
 	list1 = &models.List{
 		ID:       primitive.NewObjectID(),
 		Title:    "list 1",
 		Position: 0,
-		BoardID:  boardID,
+		BoardID:  board1.ID,
 	}
 
 	card1 = &models.Card{
@@ -60,23 +78,47 @@ var (
 func (s *cardUsecaseSuite) SetupTest() {
 	s.listRepo = new(lr.Repository)
 	s.cardRepo = new(cr.Repository)
+	s.boardMemberRepo = new(bmr.Repository)
+
+	getBoardMembers := func(boardID primitive.ObjectID) []*models.BoardMember {
+		if boardID == board1.ID {
+			return []*models.BoardMember{boardMember1, boardMember2}
+		}
+
+		return []*models.BoardMember{}
+	}
 
 	s.listRepo.On("GetListByID", mock.AnythingOfType("primitive.ObjectID")).Return(list1, nil)
 	s.cardRepo.On("GetListCards", mock.AnythingOfType("primitive.ObjectID")).Return([]*models.Card{card1, card2, card3}, nil)
 	s.cardRepo.On("Create", mock.AnythingOfType("*models.Card")).Return(nil)
+	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return(getBoardMembers, nil)
 
-	s.usecase = usecase.NewCardUsecase(s.listRepo, s.cardRepo)
+	s.usecase = usecase.NewCardUsecase(s.listRepo, s.cardRepo, s.boardMemberRepo)
 }
 
 func (s *cardUsecaseSuite) TestCreateCardEmptyTitle() {
-	err := s.usecase.Create(primitive.NewObjectID(), "")
+	err := s.usecase.Create(primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID(), "")
 
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), custom_errors.ErrCardTitleEmpty.Error(), err.Error())
 }
 
+func (s *cardUsecaseSuite) TestCreateCardNoBoard() {
+	err := s.usecase.Create(primitive.NewObjectID(), board2.ID, primitive.NewObjectID(), "card 1")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+}
+
+func (s *cardUsecaseSuite) TestCreateCardNotAuthorize() {
+	err := s.usecase.Create(primitive.NewObjectID(), board1.ID, primitive.NewObjectID(), "card 1")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+}
+
 func (s *cardUsecaseSuite) TestCreateCardSuccessful() {
-	err := s.usecase.Create(primitive.NewObjectID(), "card 1")
+	err := s.usecase.Create(boardMember1.UserID, board1.ID, primitive.NewObjectID(), "card 1")
 
 	assert.NoError(s.T(), err)
 }

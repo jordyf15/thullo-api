@@ -13,7 +13,7 @@ type Repository interface {
 }
 
 type Usecase interface {
-	Create(boardID primitive.ObjectID, title string) error
-	UpdateTitle(listID primitive.ObjectID, title string) error
-	UpdatePosition(boardID, listID primitive.ObjectID, newPosition int) error
+	Create(requesterID, boardID primitive.ObjectID, title string) error
+	UpdateTitle(requesterID, boardID, listID primitive.ObjectID, title string) error
+	UpdatePosition(requesterID, boardID, listID primitive.ObjectID, newPosition int) error
 }

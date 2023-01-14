@@ -24,8 +24,9 @@ func NewListController(usecase list.Usecase) ListController {
 }
 
 func (controller *listController) Create(c *gin.Context) {
+	userID := c.MustGet("current_user_id").(primitive.ObjectID)
 	boardIDStr := c.Param("board_id")
-	title := c.PostForm("title")
+	title := strings.TrimSpace(c.PostForm("title"))
 
 	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
 	if err != nil {
@@ -33,7 +34,7 @@ func (controller *listController) Create(c *gin.Context) {
 		return
 	}
 
-	err = controller.usecase.Create(boardID, title)
+	err = controller.usecase.Create(userID, boardID, title)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return
@@ -43,8 +44,10 @@ func (controller *listController) Create(c *gin.Context) {
 }
 
 func (controller *listController) Update(c *gin.Context) {
+	userID := c.MustGet("current_user_id").(primitive.ObjectID)
 	listIDStr := c.Param("list_id")
 	boardIDStr := c.Param("board_id")
+
 	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
 	if err != nil {
 		respondBasedOnError(c, err)
@@ -59,7 +62,7 @@ func (controller *listController) Update(c *gin.Context) {
 
 	title, isExist := c.GetPostForm("title")
 	if isExist {
-		err := controller.usecase.UpdateTitle(listID, strings.TrimSpace(title))
+		err := controller.usecase.UpdateTitle(userID, boardID, listID, strings.TrimSpace(title))
 		if err != nil {
 			respondBasedOnError(c, err)
 			return
@@ -74,7 +77,7 @@ func (controller *listController) Update(c *gin.Context) {
 			return
 		}
 
-		err = controller.usecase.UpdatePosition(boardID, listID, position)
+		err = controller.usecase.UpdatePosition(userID, boardID, listID, position)
 		if err != nil {
 			respondBasedOnError(c, err)
 			return

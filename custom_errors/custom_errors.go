@@ -50,7 +50,9 @@ var (
 	ErrBoardMustHaveAnAdmin     = newErr(506, "Board must have atleast one admin")
 
 	// list errors
-	ErrListTitleEmpty = newErr(601, "List title is empty")
+	ErrListTitleEmpty      = newErr(601, "List title is empty")
+	ErrListPositionTooLow  = newErr(602, "List position is too low")
+	ErrListPositionTooHigh = newErr(603, "List position is too high")
 
 	// card errors
 	ErrCardTitleEmpty = newErr(701, "Card title is empty")
