@@ -14,6 +14,7 @@ import (
 type BoardController interface {
 	Create(c *gin.Context)
 	AddMember(c *gin.Context)
+	UpdateMemberRole(c *gin.Context)
 }
 
 type boardController struct {
@@ -78,6 +79,33 @@ func (controller *boardController) AddMember(c *gin.Context) {
 	}
 
 	err = controller.usecase.AddMember(requesterID, boardID, memberID)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (controller *boardController) UpdateMemberRole(c *gin.Context) {
+	requesterID := c.MustGet("current_user_id").(primitive.ObjectID)
+	boardIDStr := c.Param("board_id")
+	memberIDStr := c.Param("member_id")
+	role := c.PostForm("role")
+
+	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	memberID, err := primitive.ObjectIDFromHex(memberIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	err = controller.usecase.UpdateMemberRole(requesterID, boardID, memberID, role)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return

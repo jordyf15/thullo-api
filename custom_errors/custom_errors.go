@@ -46,6 +46,8 @@ var (
 	ErrBoardCoverEmpty          = newErr(502, "Board cover is empty")
 	ErrBoardInvalidVisibility   = newErr(503, "Board visibility is invalid")
 	ErrUserIsAlreadyBoardMember = newErr(504, "User is already a board member")
+	ErrInvalidBoardMemberRole   = newErr(505, "Board member role is invalid")
+	ErrBoardMustHaveAnAdmin     = newErr(506, "Board must have atleast one admin")
 
 	// list errors
 	ErrListTitleEmpty = newErr(601, "List title is empty")

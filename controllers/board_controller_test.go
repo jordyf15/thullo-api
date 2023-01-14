@@ -37,6 +37,7 @@ func (s *boardControllerSuite) SetupTest() {
 
 	usecaseMock.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]interface {}")).Return(nil)
 	usecaseMock.On("AddMember", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
+	usecaseMock.On("UpdateMemberRole", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
 
 	s.controller = controllers.NewBoardController(usecaseMock)
 	s.response = httptest.NewRecorder()
@@ -50,6 +51,10 @@ func (s *boardControllerSuite) SetupTest() {
 		c.Set("current_user_id", primitive.NewObjectID())
 		c.Next()
 	}, s.controller.AddMember)
+	s.router.PATCH("/boards/:board_id/members/:member_id", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.UpdateMemberRole)
 }
 
 func (s *boardControllerSuite) TestCreateEmptyCover() {
@@ -143,6 +148,20 @@ func (s *boardControllerSuite) TestAddMember() {
 	writer.Close()
 
 	s.context.Request, _ = http.NewRequest("POST", fmt.Sprintf("/boards/%s/members", primitive.NewObjectID().Hex()), buf)
+	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	s.router.ServeHTTP(s.response, s.context.Request)
+
+	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+}
+
+func (s *boardControllerSuite) TestUpdateMemberRole() {
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+	role, _ := writer.CreateFormField("role")
+	role.Write([]byte("admin"))
+	writer.Close()
+
+	s.context.Request, _ = http.NewRequest("PATCH", fmt.Sprintf("/boards/%s/members/%s", primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex()), buf)
 	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
 	s.router.ServeHTTP(s.response, s.context.Request)
 

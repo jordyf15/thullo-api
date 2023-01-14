@@ -8,4 +8,5 @@ import (
 type Repository interface {
 	Create(boardMember *models.BoardMember) error
 	GetBoardMembers(boardID primitive.ObjectID) ([]*models.BoardMember, error)
+	UpdateBoardMemberRole(ID primitive.ObjectID, role models.MemberRole) error
 }

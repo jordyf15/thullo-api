@@ -46,3 +46,10 @@ func (repo *boardMemberRepository) GetBoardMembers(boardID primitive.ObjectID) (
 
 	return boardMembers, nil
 }
+
+func (repo *boardMemberRepository) UpdateBoardMemberRole(ID primitive.ObjectID, role models.MemberRole) error {
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("board_members/%s/role", ID.Hex()))
+
+	return ref.Set(ctx, role)
+}

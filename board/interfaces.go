@@ -20,4 +20,5 @@ type Repository interface {
 type Usecase interface {
 	Create(userID primitive.ObjectID, title string, visibility string, boardCover map[string]interface{}) error
 	AddMember(requesterID, boardID, memberID primitive.ObjectID) error
+	UpdateMemberRole(requesterID, boardID, memberID primitive.ObjectID, role string) error
 }

@@ -40,6 +40,20 @@ func (_m *Usecase) Create(userID primitive.ObjectID, title string, visibility st
 	return r0
 }
 
+// UpdateMemberRole provides a mock function with given fields: requesterID, boardID, memberID, role
+func (_m *Usecase) UpdateMemberRole(requesterID primitive.ObjectID, boardID primitive.ObjectID, memberID primitive.ObjectID, role string) error {
+	ret := _m.Called(requesterID, boardID, memberID, role)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, memberID, role)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 type mockConstructorTestingTNewUsecase interface {
 	mock.TestingT
 	Cleanup(func())

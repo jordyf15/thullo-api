@@ -40,11 +40,13 @@ var (
 		ID:      primitive.NewObjectID(),
 		UserID:  requesterID1,
 		BoardID: board1.ID,
+		Role:    models.MemberRoleAdmin,
 	}
 	boardMember2 = &models.BoardMember{
 		ID:      primitive.NewObjectID(),
 		UserID:  newMemberID1,
 		BoardID: board1.ID,
+		Role:    models.MemberRoleMember,
 	}
 	user1 = &models.User{
 		ID: newMemberID1,
@@ -74,6 +76,14 @@ func (s *boardUsecaseSuite) SetupTest() {
 	img2, _ = os.Create("image2.jpg")
 	img3, _ = os.Create("image3.jpg")
 
+	getBoardMembers := func(boardID primitive.ObjectID) []*models.BoardMember {
+		if boardID == board1.ID {
+			return []*models.BoardMember{boardMember1, boardMember2}
+		}
+
+		return []*models.BoardMember{}
+	}
+
 	s.unsplashRepo.On("GetImagesForID", mock.AnythingOfType("string"), mock.AnythingOfType("float64")).Return([]*os.File{img1, img2, img3}, nil)
 	s.storage.On("UploadFile", mock.AnythingOfType("chan<- error"), mock.AnythingOfType("*sync.WaitGroup"), mock.AnythingOfType("*models.Image"), mock.AnythingOfType("*os.File"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
 		arg1 := args[0].(chan<- error)
@@ -85,7 +95,8 @@ func (s *boardUsecaseSuite) SetupTest() {
 	s.boardRepo.On("GetBoardByID", mock.AnythingOfType("primitive.ObjectID")).Return(board1, nil)
 	s.userRepo.On("GetByID", mock.AnythingOfType("primitive.ObjectID")).Return(user1, nil)
 	s.boardMemberRepo.On("Create", mock.AnythingOfType("*models.BoardMember")).Return(nil)
-	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return([]*models.BoardMember{boardMember1, boardMember2}, nil)
+	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return(getBoardMembers, nil)
+	s.boardMemberRepo.On("UpdateBoardMemberRole", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("models.MemberRole")).Return(nil)
 
 	s.usecase = usecase.NewBoardUsecase(s.boardRepo, s.unsplashRepo, s.boardMemberRepo, s.userRepo, s.storage)
 }
@@ -129,6 +140,7 @@ func (s *boardUsecaseSuite) TestAddMemberNotAuthorized() {
 
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "Create", 0)
 }
 
 func (s *boardUsecaseSuite) TestAddedMemberIsAlreadyMember() {
@@ -136,10 +148,67 @@ func (s *boardUsecaseSuite) TestAddedMemberIsAlreadyMember() {
 
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), custom_errors.ErrUserIsAlreadyBoardMember.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "Create", 0)
 }
 
 func (s *boardUsecaseSuite) TestAddMemberSuccessful() {
 	err := s.usecase.AddMember(requesterID1, board1.ID, newMemberID2)
 
 	assert.NoError(s.T(), err)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "Create", 1)
+}
+
+func (s *boardUsecaseSuite) TestUpdateMemberRoleInvalidRole() {
+	err := s.usecase.UpdateMemberRole(primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID(), "master")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrInvalidBoardMemberRole.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateMemberRoleNoMembers() {
+	err := s.usecase.UpdateMemberRole(primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID(), "admin")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateMemberRoleAsNonMember() {
+	err := s.usecase.UpdateMemberRole(primitive.NewObjectID(), board1.ID, primitive.NewObjectID(), "member")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateMemberRoleAsMember() {
+	err := s.usecase.UpdateMemberRole(boardMember2.UserID, board1.ID, primitive.NewObjectID(), "member")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateMemberRoleForNonMember() {
+	err := s.usecase.UpdateMemberRole(boardMember1.UserID, board1.ID, primitive.NewObjectID(), "member")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateMemberRoleDemoteLastAdmin() {
+	err := s.usecase.UpdateMemberRole(boardMember1.UserID, board1.ID, boardMember1.UserID, "member")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrBoardMustHaveAnAdmin.Error(), err.Error())
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 0)
+}
+
+func (s *boardUsecaseSuite) TestUpdateMemberRoleSuccessful() {
+	err := s.usecase.UpdateMemberRole(boardMember1.UserID, board1.ID, boardMember2.UserID, "admin")
+
+	assert.NoError(s.T(), err)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "UpdateBoardMemberRole", 1)
 }

@@ -194,3 +194,56 @@ func (usecase *boardUsecase) AddMember(requesterID, boardID, memberID primitive.
 
 	return nil
 }
+
+func (usecase *boardUsecase) UpdateMemberRole(requesterID, boardID, memberID primitive.ObjectID, role string) error {
+	if role != models.MemberRoleMember && role != models.MemberRoleAdmin {
+		return custom_errors.ErrInvalidBoardMemberRole
+	}
+
+	boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(boardID)
+	if err != nil {
+		return err
+	}
+
+	// if there are no board members it means there are no board
+	// a board will always atleast have 1 member
+	if len(boardMembers) == 0 {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	var requesterBoardMember *models.BoardMember
+	var memberBoardMember *models.BoardMember
+	adminCount := 0
+	for _, boardMember := range boardMembers {
+		if boardMember.UserID == requesterID {
+			requesterBoardMember = boardMember
+		}
+		if boardMember.UserID == memberID {
+			memberBoardMember = boardMember
+		}
+		if boardMember.Role == models.MemberRoleAdmin {
+			adminCount += 1
+		}
+	}
+
+	// if requester is not a member or his/her role is a member than he is not authorized
+	// to perform this operation
+	if requesterBoardMember == nil || requesterBoardMember.Role == models.MemberRoleMember {
+		return custom_errors.ErrNotAuthorized
+	}
+
+	if memberBoardMember == nil {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	if adminCount == 1 && memberBoardMember.Role == models.MemberRoleAdmin && role == models.MemberRoleMember {
+		return custom_errors.ErrBoardMustHaveAnAdmin
+	}
+
+	err = usecase.boardMemberRepo.UpdateBoardMemberRole(memberBoardMember.ID, models.MemberRole(role))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
