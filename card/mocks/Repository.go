@@ -28,6 +28,29 @@ func (_m *Repository) Create(_a0 *models.Card) error {
 	return r0
 }
 
+// GetCardByID provides a mock function with given fields: cardID
+func (_m *Repository) GetCardByID(cardID primitive.ObjectID) (*models.Card, error) {
+	ret := _m.Called(cardID)
+
+	var r0 *models.Card
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID) *models.Card); ok {
+		r0 = rf(cardID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Card)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(primitive.ObjectID) error); ok {
+		r1 = rf(cardID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetListCards provides a mock function with given fields: listID
 func (_m *Repository) GetListCards(listID primitive.ObjectID) ([]*models.Card, error) {
 	ret := _m.Called(listID)

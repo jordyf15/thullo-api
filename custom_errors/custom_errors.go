@@ -56,6 +56,9 @@ var (
 
 	// card errors
 	ErrCardTitleEmpty = newErr(701, "Card title is empty")
+
+	// comment errors
+	ErrCommentEmpty = newErr(801, "Comment is empty")
 )
 
 type Error struct {

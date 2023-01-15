@@ -8,6 +8,7 @@ import (
 type Repository interface {
 	Create(card *models.Card) error
 	GetListCards(listID primitive.ObjectID) ([]*models.Card, error)
+	GetCardByID(cardID primitive.ObjectID) (*models.Card, error)
 }
 
 type Usecase interface {

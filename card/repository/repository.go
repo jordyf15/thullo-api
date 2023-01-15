@@ -7,6 +7,7 @@ import (
 
 	"firebase.google.com/go/v4/db"
 	"github.com/jordyf15/thullo-api/card"
+	"github.com/jordyf15/thullo-api/custom_errors"
 	"github.com/jordyf15/thullo-api/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -48,4 +49,22 @@ func (repo *cardRepository) GetListCards(listID primitive.ObjectID) ([]*models.C
 	}
 
 	return cards, nil
+}
+
+func (repo *cardRepository) GetCardByID(cardID primitive.ObjectID) (*models.Card, error) {
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("cards/%s", cardID.Hex()))
+
+	card := &models.Card{}
+
+	err := ref.Get(ctx, &card)
+	if err != nil {
+		return nil, err
+	}
+
+	if card == nil {
+		return nil, custom_errors.ErrRecordNotFound
+	}
+
+	return card, nil
 }
