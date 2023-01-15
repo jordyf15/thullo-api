@@ -11,6 +11,7 @@ import (
 
 type CommentController interface {
 	Create(c *gin.Context)
+	Update(c *gin.Context)
 }
 
 type commentController struct {
@@ -40,6 +41,33 @@ func (controller *commentController) Create(c *gin.Context) {
 	}
 
 	err = controller.usecase.Create(requesterID, boardID, cardID, comment)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (controller *commentController) Update(c *gin.Context) {
+	requesterID := c.MustGet("current_user_id").(primitive.ObjectID)
+	boardIDStr := c.Param("board_id")
+	commentIDStr := c.Param("comment_id")
+	comment := strings.TrimSpace(c.PostForm("comment"))
+
+	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	commentID, err := primitive.ObjectIDFromHex(commentIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	err = controller.usecase.Update(requesterID, boardID, commentID, comment)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return

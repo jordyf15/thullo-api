@@ -68,3 +68,51 @@ func (usecase *commentUsecase) Create(requesterID, boardID, cardID primitive.Obj
 
 	return nil
 }
+
+func (usecase *commentUsecase) Update(requesterID, boardID, commentID primitive.ObjectID, comment string) error {
+	if comment == "" {
+		return custom_errors.ErrCommentEmpty
+	}
+
+	board, err := usecase.boardRepo.GetBoardByID(boardID)
+	if err != nil {
+		return err
+	}
+
+	if board.Visibility == models.BoardVisibilityPrivate {
+		boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(boardID)
+		if err != nil {
+			return err
+		}
+
+		isRequesterBoardMember := false
+		for _, boardMember := range boardMembers {
+			if boardMember.UserID == requesterID {
+				isRequesterBoardMember = true
+				break
+			}
+		}
+
+		if !isRequesterBoardMember {
+			return custom_errors.ErrNotAuthorized
+		}
+	}
+
+	commentObj, err := usecase.commentRepo.GetCommentByID(commentID)
+	if err != nil {
+		return err
+	}
+
+	if commentObj.AuthorID != requesterID {
+		return custom_errors.ErrNotAuthorized
+	}
+
+	commentObj.Comment = comment
+
+	err = usecase.commentRepo.Update(commentObj)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

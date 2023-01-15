@@ -72,6 +72,7 @@ func initializeRoutes() {
 	router.PATCH("boards/:board_id/lists/:list_id", listController.Update)
 
 	router.POST("boards/:board_id/lists/:list_id/cards/:card_id/comments", commentController.Create)
+	router.PATCH("boards/:board_id/lists/:list_id/cards/:card_id/comments/:comment_id", commentController.Update)
 
 	router.POST("boards/:board_id/lists/:list_id/cards", cardController.Create)
 }

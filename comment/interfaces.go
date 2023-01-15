@@ -7,8 +7,11 @@ import (
 
 type Repository interface {
 	Create(comment *models.Comment) error
+	GetCommentByID(commentID primitive.ObjectID) (*models.Comment, error)
+	Update(comment *models.Comment) error
 }
 
 type Usecase interface {
 	Create(requesterID, boardID, cardID primitive.ObjectID, comment string) error
+	Update(requesterID, boardID, commentID primitive.ObjectID, comment string) error
 }
