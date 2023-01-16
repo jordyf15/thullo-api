@@ -65,6 +65,10 @@ func (usecase *listUsecase) UpdateTitle(requesterID, boardID, listID primitive.O
 		return err
 	}
 
+	if list.BoardID != boardID {
+		return custom_errors.ErrRecordNotFound
+	}
+
 	list.Title = title
 	list.UpdatedAt = time.Now()
 
@@ -87,6 +91,10 @@ func (usecase *listUsecase) UpdatePosition(requesterID, boardID, listID primitiv
 		return err
 	}
 	prevPosition := updatedList.Position
+
+	if updatedList.BoardID != boardID {
+		return custom_errors.ErrRecordNotFound
+	}
 
 	lists, err := usecase.listRepo.GetBoardLists(boardID)
 	if err != nil {

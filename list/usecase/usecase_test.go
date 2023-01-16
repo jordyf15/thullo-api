@@ -60,6 +60,12 @@ var (
 		Title:    "title 3",
 		Position: 2,
 	}
+	list4 = &models.List{
+		ID:       primitive.NewObjectID(),
+		BoardID:  board2.ID,
+		Title:    "title 1",
+		Position: 0,
+	}
 )
 
 type listUsecaseSuite struct {
@@ -84,9 +90,13 @@ func (s *listUsecaseSuite) SetupTest() {
 	getListByID := func(listID primitive.ObjectID) *models.List {
 		if listID == list3.ID {
 			return list3
+		} else if listID == list1.ID {
+			return list1
+		} else if listID == list2.ID {
+			return list2
 		}
 
-		return list1
+		return list4
 	}
 
 	getBoardMembers := func(boardID primitive.ObjectID) []*models.BoardMember {
@@ -157,8 +167,16 @@ func (s *listUsecaseSuite) TestUpdateTitleUserNotAuthorized() {
 	s.listRepo.AssertNumberOfCalls(s.T(), "UpdateList", 0)
 }
 
+func (s *listUsecaseSuite) TestUpdateTitleListNotBelongToBoard() {
+	err := s.usecase.UpdateTitle(boardMember1.UserID, board1.ID, primitive.NewObjectID(), "todo1 updated")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.listRepo.AssertNumberOfCalls(s.T(), "UpdateList", 0)
+}
+
 func (s *listUsecaseSuite) TestUpdateTitleSuccessful() {
-	err := s.usecase.UpdateTitle(boardMember1.UserID, board1.ID, primitive.NewObjectID(), "todo 1 updated")
+	err := s.usecase.UpdateTitle(boardMember1.UserID, board1.ID, list1.ID, "todo 1 updated")
 
 	assert.NoError(s.T(), err)
 	s.listRepo.AssertNumberOfCalls(s.T(), "UpdateList", 1)
@@ -193,6 +211,14 @@ func (s *listUsecaseSuite) TestUpdatePositionNotAuthorized() {
 
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.listRepo.AssertNumberOfCalls(s.T(), "UpdateList", 0)
+}
+
+func (s *listUsecaseSuite) TestUpdateListNotBelongToBoard() {
+	err := s.usecase.UpdatePosition(boardMember1.UserID, board1.ID, primitive.NewObjectID(), 2)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
 	s.listRepo.AssertNumberOfCalls(s.T(), "UpdateList", 0)
 }
 
