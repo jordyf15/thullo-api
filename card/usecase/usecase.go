@@ -34,6 +34,11 @@ func (usecase *cardUsecase) Create(requesterID, boardID, listID primitive.Object
 		return err
 	}
 
+	// make sure the list actually belong to the board that the user have access to
+	if list.BoardID != boardID {
+		return custom_errors.ErrRecordNotFound
+	}
+
 	cards, err := usecase.cardRepo.GetListCards(list.ID)
 	if err != nil {
 		return err

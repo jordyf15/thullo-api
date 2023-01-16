@@ -54,6 +54,12 @@ var (
 		Position: 0,
 		BoardID:  board1.ID,
 	}
+	list2 = &models.List{
+		ID:       primitive.NewObjectID(),
+		Title:    "list 2",
+		Position: 0,
+		BoardID:  primitive.NewObjectID(),
+	}
 
 	card1 = &models.Card{
 		ID:       primitive.NewObjectID(),
@@ -88,7 +94,15 @@ func (s *cardUsecaseSuite) SetupTest() {
 		return []*models.BoardMember{}
 	}
 
-	s.listRepo.On("GetListByID", mock.AnythingOfType("primitive.ObjectID")).Return(list1, nil)
+	getListByID := func(listID primitive.ObjectID) *models.List {
+		if listID == list1.ID {
+			return list1
+		}
+
+		return list2
+	}
+
+	s.listRepo.On("GetListByID", mock.AnythingOfType("primitive.ObjectID")).Return(getListByID, nil)
 	s.cardRepo.On("GetListCards", mock.AnythingOfType("primitive.ObjectID")).Return([]*models.Card{card1, card2, card3}, nil)
 	s.cardRepo.On("Create", mock.AnythingOfType("*models.Card")).Return(nil)
 	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return(getBoardMembers, nil)
@@ -117,8 +131,15 @@ func (s *cardUsecaseSuite) TestCreateCardNotAuthorize() {
 	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
 }
 
-func (s *cardUsecaseSuite) TestCreateCardSuccessful() {
+func (s *cardUsecaseSuite) TestCreateCardListNotBelongToBoard() {
 	err := s.usecase.Create(boardMember1.UserID, board1.ID, primitive.NewObjectID(), "card 1")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+}
+
+func (s *cardUsecaseSuite) TestCreateCardSuccessful() {
+	err := s.usecase.Create(boardMember1.UserID, board1.ID, list1.ID, "card 1")
 
 	assert.NoError(s.T(), err)
 }
