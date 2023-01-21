@@ -36,6 +36,7 @@ func (s *commentControllerSuite) SetupTest() {
 
 	s.usecase.On("Create", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
 	s.usecase.On("Update", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("string")).Return(nil)
+	s.usecase.On("Delete", mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID"), mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 
 	s.controller = controllers.NewCommentController(s.usecase)
 	s.response = httptest.NewRecorder()
@@ -49,6 +50,10 @@ func (s *commentControllerSuite) SetupTest() {
 		c.Set("current_user_id", primitive.NewObjectID())
 		c.Next()
 	}, s.controller.Update)
+	s.router.DELETE("/boards/:board_id/lists/:list_id/cards/:card_id/comments/:comment_id", func(c *gin.Context) {
+		c.Set("current_user_id", primitive.NewObjectID())
+		c.Next()
+	}, s.controller.Delete)
 }
 
 func (s *commentControllerSuite) TestCreate() {
@@ -74,6 +79,13 @@ func (s *commentControllerSuite) TestUpdate() {
 
 	s.context.Request, _ = http.NewRequest("PATCH", fmt.Sprintf("/boards/%s/lists/%s/cards/%s/comments/%s", primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex()), buf)
 	s.context.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	s.router.ServeHTTP(s.response, s.context.Request)
+
+	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)
+}
+
+func (s *commentControllerSuite) TestDelete() {
+	s.context.Request, _ = http.NewRequest("DELETE", fmt.Sprintf("/boards/%s/lists/%s/cards/%s/comments/%s", primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex(), primitive.NewObjectID().Hex()), nil)
 	s.router.ServeHTTP(s.response, s.context.Request)
 
 	assert.Equal(s.T(), http.StatusNoContent, s.response.Code)

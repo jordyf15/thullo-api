@@ -153,3 +153,66 @@ func (usecase *commentUsecase) Update(requesterID, boardID, listID, cardID, comm
 
 	return nil
 }
+
+func (usecase *commentUsecase) Delete(requesterID, boardID, listID, cardID, commentID primitive.ObjectID) error {
+	board, err := usecase.boardRepo.GetBoardByID(boardID)
+	if err != nil {
+		return err
+	}
+
+	boardMembers, err := usecase.boardMemberRepo.GetBoardMembers(boardID)
+	if err != nil {
+		return err
+	}
+
+	var requesterBoardMember *models.BoardMember
+	for _, boardMember := range boardMembers {
+		if boardMember.UserID == requesterID {
+			requesterBoardMember = boardMember
+		}
+	}
+
+	if board.Visibility == models.BoardVisibilityPrivate {
+		if requesterBoardMember == nil {
+			return custom_errors.ErrNotAuthorized
+		}
+	}
+
+	list, err := usecase.listRepo.GetListByID(listID)
+	if err != nil {
+		return err
+	}
+
+	if list.BoardID != boardID {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	card, err := usecase.cardRepo.GetCardByID(cardID)
+	if err != nil {
+		return err
+	}
+
+	if card.ListID != listID {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	comment, err := usecase.commentRepo.GetCommentByID(commentID)
+	if err != nil {
+		return err
+	}
+
+	if comment.CardID != cardID {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	if comment.AuthorID != requesterID && (requesterBoardMember == nil || requesterBoardMember.Role != models.MemberRoleAdmin) {
+		return custom_errors.ErrNotAuthorized
+	}
+
+	err = usecase.commentRepo.DeleteCommentByID(commentID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

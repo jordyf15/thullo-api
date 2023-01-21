@@ -12,6 +12,7 @@ import (
 type CommentController interface {
 	Create(c *gin.Context)
 	Update(c *gin.Context)
+	Delete(c *gin.Context)
 }
 
 type commentController struct {
@@ -89,6 +90,46 @@ func (controller *commentController) Update(c *gin.Context) {
 	}
 
 	err = controller.usecase.Update(requesterID, boardID, listID, cardID, commentID, comment)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (controller *commentController) Delete(c *gin.Context) {
+	requesterID := c.MustGet("current_user_id").(primitive.ObjectID)
+	boardIDStr := c.Param("board_id")
+	listIDStr := c.Param("list_id")
+	cardIDStr := c.Param("card_id")
+	commentIDStr := c.Param("comment_id")
+
+	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	listID, err := primitive.ObjectIDFromHex(listIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	cardID, err := primitive.ObjectIDFromHex(cardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	commentID, err := primitive.ObjectIDFromHex(commentIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	err = controller.usecase.Delete(requesterID, boardID, listID, cardID, commentID)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return

@@ -28,6 +28,20 @@ func (_m *Repository) Create(_a0 *models.Comment) error {
 	return r0
 }
 
+// DeleteCommentByID provides a mock function with given fields: commentID
+func (_m *Repository) DeleteCommentByID(commentID primitive.ObjectID) error {
+	ret := _m.Called(commentID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID) error); ok {
+		r0 = rf(commentID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetCommentByID provides a mock function with given fields: commentID
 func (_m *Repository) GetCommentByID(commentID primitive.ObjectID) (*models.Comment, error) {
 	ret := _m.Called(commentID)

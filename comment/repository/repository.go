@@ -57,3 +57,10 @@ func (repo *commentRepository) Update(comment *models.Comment) error {
 
 	return ref.Set(ctx, comment)
 }
+
+func (repo *commentRepository) DeleteCommentByID(commentID primitive.ObjectID) error {
+	ctx := context.Background()
+	ref := repo.dbClient.NewRef(fmt.Sprintf("comments/%s", commentID.Hex()))
+
+	return ref.Delete(ctx)
+}

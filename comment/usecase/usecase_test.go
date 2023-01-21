@@ -86,6 +86,11 @@ var (
 		AuthorID: primitive.NewObjectID(),
 		CardID:   primitive.NewObjectID(),
 	}
+	comment4 = &models.Comment{
+		ID:       primitive.NewObjectID(),
+		AuthorID: boardMember2.UserID,
+		CardID:   card1.ID,
+	}
 )
 
 type commentUsecaseSuite struct {
@@ -140,6 +145,8 @@ func (s *commentUsecaseSuite) SetupTest() {
 			return comment1
 		} else if commentID == comment2.ID {
 			return comment2
+		} else if commentID == comment4.ID {
+			return comment4
 		}
 
 		return comment3
@@ -151,6 +158,7 @@ func (s *commentUsecaseSuite) SetupTest() {
 	s.commentRepo.On("Create", mock.AnythingOfType("*models.Comment")).Return(nil)
 	s.commentRepo.On("GetCommentByID", mock.AnythingOfType("primitive.ObjectID")).Return(getCommentByID, nil)
 	s.commentRepo.On("Update", mock.AnythingOfType("*models.Comment")).Return(nil)
+	s.commentRepo.On("DeleteCommentByID", mock.AnythingOfType("primitive.ObjectID")).Return(nil)
 	s.listRepo.On("GetListByID", mock.AnythingOfType("primitive.ObjectID")).Return(getListByID, nil)
 
 	s.usecase = usecase.NewCommentUsecase(s.boardMemberRepo, s.cardRepo, s.commentRepo, s.boardRepo, s.listRepo)
@@ -319,4 +327,93 @@ func (s *commentUsecaseSuite) TestUpdateCommentOnPublicBoardSuccessful() {
 	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
 	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 1)
 	s.commentRepo.AssertNumberOfCalls(s.T(), "Update", 1)
+}
+
+func (s *commentUsecaseSuite) TestDeleteCommentOnPrivateBoardAsNonMember() {
+	err := s.usecase.Delete(primitive.NewObjectID(), board1.ID, list1.ID, card1.ID, comment1.ID)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "GetBoardByID", 1)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 0)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 0)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 0)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "DeleteCommentByID", 0)
+}
+
+func (s *commentUsecaseSuite) TestDeleteCommentOnListNotInBoard() {
+	err := s.usecase.Delete(boardMember1.UserID, board1.ID, primitive.NewObjectID(), card1.ID, comment1.ID)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "GetBoardByID", 1)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 0)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 0)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "DeleteCommentByID", 0)
+}
+
+func (s *commentUsecaseSuite) TestDeleteCommentOnCardNotInList() {
+	err := s.usecase.Delete(boardMember1.UserID, board1.ID, list1.ID, primitive.NewObjectID(), comment1.ID)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "GetBoardByID", 1)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 0)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "DeleteCommentByID", 0)
+}
+
+func (s *commentUsecaseSuite) TestDeleteCommentNotInCard() {
+	err := s.usecase.Delete(boardMember1.UserID, board1.ID, list1.ID, card1.ID, primitive.NewObjectID())
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "GetBoardByID", 1)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "DeleteCommentByID", 0)
+}
+
+func (s *commentUsecaseSuite) TestDeleteCommentAsMemberButNotAuthorOrAdmin() {
+	err := s.usecase.Delete(boardMember2.UserID, board1.ID, list1.ID, card1.ID, comment1.ID)
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
+	s.boardRepo.AssertNumberOfCalls(s.T(), "GetBoardByID", 1)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "DeleteCommentByID", 0)
+}
+
+func (s *commentUsecaseSuite) TestDeleteCommentAsAuthor() {
+	err := s.usecase.Delete(boardMember2.UserID, board1.ID, list1.ID, card1.ID, comment4.ID)
+
+	assert.NoError(s.T(), err)
+	s.boardRepo.AssertNumberOfCalls(s.T(), "GetBoardByID", 1)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "DeleteCommentByID", 1)
+}
+
+func (s *commentUsecaseSuite) TestDeleteCommentAsAdmin() {
+	err := s.usecase.Delete(boardMember1.UserID, board1.ID, list1.ID, card1.ID, comment4.ID)
+
+	assert.NoError(s.T(), err)
+	s.boardRepo.AssertNumberOfCalls(s.T(), "GetBoardByID", 1)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "GetCommentByID", 1)
+	s.commentRepo.AssertNumberOfCalls(s.T(), "DeleteCommentByID", 1)
 }

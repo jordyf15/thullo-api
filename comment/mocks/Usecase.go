@@ -26,6 +26,20 @@ func (_m *Usecase) Create(requesterID primitive.ObjectID, boardID primitive.Obje
 	return r0
 }
 
+// Delete provides a mock function with given fields: requesterID, boardID, listID, cardID, commentID
+func (_m *Usecase) Delete(requesterID primitive.ObjectID, boardID primitive.ObjectID, listID primitive.ObjectID, cardID primitive.ObjectID, commentID primitive.ObjectID) error {
+	ret := _m.Called(requesterID, boardID, listID, cardID, commentID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, primitive.ObjectID) error); ok {
+		r0 = rf(requesterID, boardID, listID, cardID, commentID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Update provides a mock function with given fields: requesterID, boardID, listID, cardID, commentID, _a5
 func (_m *Usecase) Update(requesterID primitive.ObjectID, boardID primitive.ObjectID, listID primitive.ObjectID, cardID primitive.ObjectID, commentID primitive.ObjectID, _a5 string) error {
 	ret := _m.Called(requesterID, boardID, listID, cardID, commentID, _a5)

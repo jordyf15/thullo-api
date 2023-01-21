@@ -73,6 +73,7 @@ func initializeRoutes() {
 
 	router.POST("boards/:board_id/lists/:list_id/cards/:card_id/comments", commentController.Create)
 	router.PATCH("boards/:board_id/lists/:list_id/cards/:card_id/comments/:comment_id", commentController.Update)
+	router.DELETE("boards/:board_id/lists/:list_id/cards/:card_id/comments/:comment_id", commentController.Delete)
 
 	router.POST("boards/:board_id/lists/:list_id/cards", cardController.Create)
 }
