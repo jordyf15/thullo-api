@@ -43,7 +43,7 @@ func initializeRoutes() {
 	boardUsecase := bu.NewBoardUsecase(boardRepo, unsplashRepo, boardMemberRepo, userRepo, _storage)
 	listUsecase := lu.NewListUsecase(listRepo, boardRepo, boardMemberRepo)
 	cardUsecase := cu.NewCardUsecase(listRepo, cardRepo, boardMemberRepo)
-	commentUsecase := cmu.NewCommentUsecase(boardMemberRepo, cardRepo, commentRepo, boardRepo)
+	commentUsecase := cmu.NewCommentUsecase(boardMemberRepo, cardRepo, commentRepo, boardRepo, listRepo)
 
 	tokenController := controllers.NewTokenController(tokenUsecase)
 	userController := controllers.NewUserController(userUsecase)

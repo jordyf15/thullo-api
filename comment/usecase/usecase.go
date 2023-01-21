@@ -6,6 +6,7 @@ import (
 	"github.com/jordyf15/thullo-api/card"
 	"github.com/jordyf15/thullo-api/comment"
 	"github.com/jordyf15/thullo-api/custom_errors"
+	"github.com/jordyf15/thullo-api/list"
 	"github.com/jordyf15/thullo-api/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -15,13 +16,14 @@ type commentUsecase struct {
 	boardMemberRepo board_member.Repository
 	boardRepo       board.Repository
 	cardRepo        card.Repository
+	listRepo        list.Repository
 }
 
-func NewCommentUsecase(boardMemberRepo board_member.Repository, cardRepo card.Repository, commentRepo comment.Repository, boardRepo board.Repository) comment.Usecase {
-	return &commentUsecase{boardMemberRepo: boardMemberRepo, cardRepo: cardRepo, commentRepo: commentRepo, boardRepo: boardRepo}
+func NewCommentUsecase(boardMemberRepo board_member.Repository, cardRepo card.Repository, commentRepo comment.Repository, boardRepo board.Repository, listRepo list.Repository) comment.Usecase {
+	return &commentUsecase{boardMemberRepo: boardMemberRepo, cardRepo: cardRepo, commentRepo: commentRepo, boardRepo: boardRepo, listRepo: listRepo}
 }
 
-func (usecase *commentUsecase) Create(requesterID, boardID, cardID primitive.ObjectID, comment string) error {
+func (usecase *commentUsecase) Create(requesterID, boardID, listID, cardID primitive.ObjectID, comment string) error {
 	if comment == "" {
 		return custom_errors.ErrCommentEmpty
 	}
@@ -50,9 +52,22 @@ func (usecase *commentUsecase) Create(requesterID, boardID, cardID primitive.Obj
 		}
 	}
 
-	_, err = usecase.cardRepo.GetCardByID(cardID)
+	list, err := usecase.listRepo.GetListByID(listID)
 	if err != nil {
 		return err
+	}
+
+	if list.BoardID != boardID {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	card, err := usecase.cardRepo.GetCardByID(cardID)
+	if err != nil {
+		return err
+	}
+
+	if card.ListID != listID {
+		return custom_errors.ErrRecordNotFound
 	}
 
 	_comment := &models.Comment{

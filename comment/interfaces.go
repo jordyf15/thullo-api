@@ -12,6 +12,6 @@ type Repository interface {
 }
 
 type Usecase interface {
-	Create(requesterID, boardID, cardID primitive.ObjectID, comment string) error
+	Create(requesterID, boardID, listID, cardID primitive.ObjectID, comment string) error
 	Update(requesterID, boardID, commentID primitive.ObjectID, comment string) error
 }

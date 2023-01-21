@@ -26,6 +26,7 @@ func (controller *commentController) Create(c *gin.Context) {
 	requesterID := c.MustGet("current_user_id").(primitive.ObjectID)
 	boardIDStr := c.Param("board_id")
 	cardIDStr := c.Param("card_id")
+	listIDStr := c.Param("list_id")
 	comment := strings.TrimSpace(c.PostForm("comment"))
 
 	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
@@ -40,7 +41,13 @@ func (controller *commentController) Create(c *gin.Context) {
 		return
 	}
 
-	err = controller.usecase.Create(requesterID, boardID, cardID, comment)
+	listID, err := primitive.ObjectIDFromHex(listIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	err = controller.usecase.Create(requesterID, boardID, listID, cardID, comment)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return

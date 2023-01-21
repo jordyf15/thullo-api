@@ -10,6 +10,7 @@ import (
 	cmr "github.com/jordyf15/thullo-api/comment/mocks"
 	"github.com/jordyf15/thullo-api/comment/usecase"
 	"github.com/jordyf15/thullo-api/custom_errors"
+	lr "github.com/jordyf15/thullo-api/list/mocks"
 	"github.com/jordyf15/thullo-api/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,8 +45,30 @@ var (
 		Role:    models.MemberRoleMember,
 	}
 
+	list1 = &models.List{
+		ID:      primitive.NewObjectID(),
+		BoardID: board1.ID,
+	}
+	list2 = &models.List{
+		ID:      primitive.NewObjectID(),
+		BoardID: board2.ID,
+	}
+	list3 = &models.List{
+		ID:      primitive.NewObjectID(),
+		BoardID: primitive.NewObjectID(),
+	}
+
 	card1 = &models.Card{
-		ID: primitive.NewObjectID(),
+		ID:     primitive.NewObjectID(),
+		ListID: list1.ID,
+	}
+	card2 = &models.Card{
+		ID:     primitive.NewObjectID(),
+		ListID: list2.ID,
+	}
+	card3 = &models.Card{
+		ID:     primitive.NewObjectID(),
+		ListID: primitive.NewObjectID(),
 	}
 )
 
@@ -58,6 +81,7 @@ type commentUsecaseSuite struct {
 	boardMemberRepo *bmr.Repository
 	boardRepo       *br.Repository
 	cardRepo        *cr.Repository
+	listRepo        *lr.Repository
 }
 
 func (s *commentUsecaseSuite) SetupTest() {
@@ -65,6 +89,7 @@ func (s *commentUsecaseSuite) SetupTest() {
 	s.boardMemberRepo = new(bmr.Repository)
 	s.boardRepo = new(br.Repository)
 	s.cardRepo = new(cr.Repository)
+	s.listRepo = new(lr.Repository)
 
 	getBoardByID := func(boardID primitive.ObjectID) *models.Board {
 		if boardID == board1.ID {
@@ -74,43 +99,95 @@ func (s *commentUsecaseSuite) SetupTest() {
 		return board2
 	}
 
+	getListByID := func(listID primitive.ObjectID) *models.List {
+		if listID == list1.ID {
+			return list1
+		} else if listID == list2.ID {
+			return list2
+		}
+
+		return list3
+	}
+
+	getCardByID := func(cardID primitive.ObjectID) *models.Card {
+		if cardID == card1.ID {
+			return card1
+		} else if cardID == card2.ID {
+			return card2
+		}
+
+		return card3
+	}
+
 	s.boardRepo.On("GetBoardByID", mock.AnythingOfType("primitive.ObjectID")).Return(getBoardByID, nil)
 	s.boardMemberRepo.On("GetBoardMembers", mock.AnythingOfType("primitive.ObjectID")).Return([]*models.BoardMember{boardMember1, boardMember2}, nil)
-	s.cardRepo.On("GetCardByID", mock.AnythingOfType("primitive.ObjectID")).Return(card1, nil)
+	s.cardRepo.On("GetCardByID", mock.AnythingOfType("primitive.ObjectID")).Return(getCardByID, nil)
 	s.commentRepo.On("Create", mock.AnythingOfType("*models.Comment")).Return(nil)
+	s.listRepo.On("GetListByID", mock.AnythingOfType("primitive.ObjectID")).Return(getListByID, nil)
 
-	s.usecase = usecase.NewCommentUsecase(s.boardMemberRepo, s.cardRepo, s.commentRepo, s.boardRepo)
+	s.usecase = usecase.NewCommentUsecase(s.boardMemberRepo, s.cardRepo, s.commentRepo, s.boardRepo, s.listRepo)
 }
 
 func (s *commentUsecaseSuite) TestCreateEmptyComment() {
-	err := s.usecase.Create(primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID(), "")
+	err := s.usecase.Create(primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID(), "")
 
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), custom_errors.ErrCommentEmpty.Error(), err.Error())
 	s.commentRepo.AssertNumberOfCalls(s.T(), "Create", 0)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 0)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 0)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 0)
 }
 
 func (s *commentUsecaseSuite) TestCreateOnPrivateBoardNotAuthorized() {
-	err := s.usecase.Create(primitive.NewObjectID(), board1.ID, primitive.NewObjectID(), "comment 1")
+	err := s.usecase.Create(primitive.NewObjectID(), board1.ID, primitive.NewObjectID(), primitive.NewObjectID(), "comment 1")
 
 	assert.Error(s.T(), err)
 	assert.Equal(s.T(), custom_errors.ErrNotAuthorized.Error(), err.Error())
 	s.commentRepo.AssertNumberOfCalls(s.T(), "Create", 0)
 	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 0)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 0)
+}
+
+func (s *commentUsecaseSuite) TestCreateListNotBelongToBoard() {
+	err := s.usecase.Create(boardMember1.UserID, board1.ID, primitive.NewObjectID(), primitive.NewObjectID(), "comment 1")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.commentRepo.AssertNumberOfCalls(s.T(), "Create", 0)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 0)
+}
+
+func (s *commentUsecaseSuite) TestCreateCardNotBelongToList() {
+	err := s.usecase.Create(boardMember1.UserID, board1.ID, list1.ID, primitive.NewObjectID(), "comment 1")
+
+	assert.Error(s.T(), err)
+	assert.Equal(s.T(), custom_errors.ErrRecordNotFound.Error(), err.Error())
+	s.commentRepo.AssertNumberOfCalls(s.T(), "Create", 0)
+	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
 }
 
 func (s *commentUsecaseSuite) TestCreateOnPrivateBoardSuccessful() {
-	err := s.usecase.Create(boardMember1.UserID, board1.ID, primitive.NewObjectID(), "comment 1")
+	err := s.usecase.Create(boardMember1.UserID, board1.ID, list1.ID, card1.ID, "comment 1")
 
 	assert.NoError(s.T(), err)
 	s.commentRepo.AssertNumberOfCalls(s.T(), "Create", 1)
 	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 1)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
 }
 
 func (s *commentUsecaseSuite) TestCreateOnPublicBoardSuccessful() {
-	err := s.usecase.Create(primitive.NewObjectID(), board2.ID, primitive.NewObjectID(), "comment 1")
+	err := s.usecase.Create(primitive.NewObjectID(), board2.ID, list2.ID, card2.ID, "comment 1")
 
 	assert.NoError(s.T(), err)
 	s.commentRepo.AssertNumberOfCalls(s.T(), "Create", 1)
 	s.boardMemberRepo.AssertNumberOfCalls(s.T(), "GetBoardMembers", 0)
+	s.listRepo.AssertNumberOfCalls(s.T(), "GetListByID", 1)
+	s.cardRepo.AssertNumberOfCalls(s.T(), "GetCardByID", 1)
 }
