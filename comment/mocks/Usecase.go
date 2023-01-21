@@ -26,13 +26,13 @@ func (_m *Usecase) Create(requesterID primitive.ObjectID, boardID primitive.Obje
 	return r0
 }
 
-// Update provides a mock function with given fields: requesterID, boardID, commentID, _a3
-func (_m *Usecase) Update(requesterID primitive.ObjectID, boardID primitive.ObjectID, commentID primitive.ObjectID, _a3 string) error {
-	ret := _m.Called(requesterID, boardID, commentID, _a3)
+// Update provides a mock function with given fields: requesterID, boardID, listID, cardID, commentID, _a5
+func (_m *Usecase) Update(requesterID primitive.ObjectID, boardID primitive.ObjectID, listID primitive.ObjectID, cardID primitive.ObjectID, commentID primitive.ObjectID, _a5 string) error {
+	ret := _m.Called(requesterID, boardID, listID, cardID, commentID, _a5)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, string) error); ok {
-		r0 = rf(requesterID, boardID, commentID, _a3)
+	if rf, ok := ret.Get(0).(func(primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, primitive.ObjectID, string) error); ok {
+		r0 = rf(requesterID, boardID, listID, cardID, commentID, _a5)
 	} else {
 		r0 = ret.Error(0)
 	}

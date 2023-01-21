@@ -59,10 +59,24 @@ func (controller *commentController) Create(c *gin.Context) {
 func (controller *commentController) Update(c *gin.Context) {
 	requesterID := c.MustGet("current_user_id").(primitive.ObjectID)
 	boardIDStr := c.Param("board_id")
+	cardIDStr := c.Param("card_id")
+	listIDStr := c.Param("list_id")
 	commentIDStr := c.Param("comment_id")
 	comment := strings.TrimSpace(c.PostForm("comment"))
 
 	boardID, err := primitive.ObjectIDFromHex(boardIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	listID, err := primitive.ObjectIDFromHex(listIDStr)
+	if err != nil {
+		respondBasedOnError(c, err)
+		return
+	}
+
+	cardID, err := primitive.ObjectIDFromHex(cardIDStr)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return
@@ -74,7 +88,7 @@ func (controller *commentController) Update(c *gin.Context) {
 		return
 	}
 
-	err = controller.usecase.Update(requesterID, boardID, commentID, comment)
+	err = controller.usecase.Update(requesterID, boardID, listID, cardID, commentID, comment)
 	if err != nil {
 		respondBasedOnError(c, err)
 		return

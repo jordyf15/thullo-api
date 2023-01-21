@@ -84,7 +84,7 @@ func (usecase *commentUsecase) Create(requesterID, boardID, listID, cardID primi
 	return nil
 }
 
-func (usecase *commentUsecase) Update(requesterID, boardID, commentID primitive.ObjectID, comment string) error {
+func (usecase *commentUsecase) Update(requesterID, boardID, listID, cardID, commentID primitive.ObjectID, comment string) error {
 	if comment == "" {
 		return custom_errors.ErrCommentEmpty
 	}
@@ -113,9 +113,31 @@ func (usecase *commentUsecase) Update(requesterID, boardID, commentID primitive.
 		}
 	}
 
+	list, err := usecase.listRepo.GetListByID(listID)
+	if err != nil {
+		return err
+	}
+
+	if list.BoardID != boardID {
+		return custom_errors.ErrRecordNotFound
+	}
+
+	card, err := usecase.cardRepo.GetCardByID(cardID)
+	if err != nil {
+		return err
+	}
+
+	if card.ListID != listID {
+		return custom_errors.ErrRecordNotFound
+	}
+
 	commentObj, err := usecase.commentRepo.GetCommentByID(commentID)
 	if err != nil {
 		return err
+	}
+
+	if commentObj.CardID != cardID {
+		return custom_errors.ErrRecordNotFound
 	}
 
 	if commentObj.AuthorID != requesterID {
